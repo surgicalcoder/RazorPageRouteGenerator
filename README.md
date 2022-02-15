@@ -10,6 +10,13 @@ Firstly, add the project from Nuget - [GoLive.Generator.RazorPageRoute](https://
 </ItemGroup>
 ```
 
+If you are using .net 6, you need to disable Razor Source Code Generation, due to the way that generators are called. You can do this by inserting
+```
+ <UseRazorSourceGenerator>false</UseRazorSourceGenerator>
+```
+ 
+ Into an ItemGroup.
+
 Once that's done, add the settings file and change as required:
 
 

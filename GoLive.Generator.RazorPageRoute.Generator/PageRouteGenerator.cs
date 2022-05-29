@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -26,7 +27,9 @@ namespace GoLive.Generator.RazorPageRoute.Generator
         {
             executionContext = context;
             logBuilder = new StringBuilder();
-            var config = LoadConfig(context);
+
+            
+            var config = LoadConfig(context, defaultNamespace:context.Compilation.Assembly.Name);
 
             if (config == null)
             {
@@ -49,7 +52,7 @@ namespace GoLive.Generator.RazorPageRoute.Generator
                 {
                     if (string.IsNullOrWhiteSpace(config.OutputToFile))
                     {
-                        context.AddSource("PageRoutes.cs", source);
+                        context.AddSource("PageRoutes.g.cs", source);
                     }
                     else
                     {
@@ -210,18 +213,26 @@ namespace GoLive.Generator.RazorPageRoute.Generator
             return outp;
         }
 
-        private Settings LoadConfig(GeneratorExecutionContext context)
+        private Settings LoadConfig(GeneratorExecutionContext context, string defaultNamespace)
         {
             var configFilePath = context.AdditionalFiles.FirstOrDefault(e => e.Path.ToLowerInvariant().EndsWith("razorpageroutes.json"));
 
             if (configFilePath == null)
             {
-                return null;
+                var settings = new Settings();
+                settings.Namespace = defaultNamespace;
+                settings.ClassName = "PageRoutes";
+                return settings;
             }
 
             var jsonString = File.ReadAllText(configFilePath.Path);
             var config = JsonSerializer.Deserialize<Settings>(jsonString);
             var configFileDirectory = Path.GetDirectoryName(configFilePath.Path);
+
+            if (string.IsNullOrEmpty(config.Namespace))
+            {
+                config.Namespace = defaultNamespace;
+            }
 
             if (!string.IsNullOrWhiteSpace(config.OutputToFile))
             {

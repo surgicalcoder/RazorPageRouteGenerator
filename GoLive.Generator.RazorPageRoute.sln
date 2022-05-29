@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoLive.Generator.RazorPageR
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly", "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly\GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly.csproj", "{8A5871C3-72B3-47B1-92BB-0EF37EBEE359}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly2", "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly2\GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly2.csproj", "{67B54C4D-6B39-408B-AD30-90669684DD28}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{8A5871C3-72B3-47B1-92BB-0EF37EBEE359}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8A5871C3-72B3-47B1-92BB-0EF37EBEE359}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8A5871C3-72B3-47B1-92BB-0EF37EBEE359}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67B54C4D-6B39-408B-AD30-90669684DD28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67B54C4D-6B39-408B-AD30-90669684DD28}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67B54C4D-6B39-408B-AD30-90669684DD28}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67B54C4D-6B39-408B-AD30-90669684DD28}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

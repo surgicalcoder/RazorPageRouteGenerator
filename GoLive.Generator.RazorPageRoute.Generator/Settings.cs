@@ -10,5 +10,7 @@
         public string DebugOutputFile { get; set; }
 
         public bool OutputLastCreatedTime { get; set; }
+        
+        public bool OutputExtensionMethod { get; set; }
     }
 }

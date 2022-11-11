@@ -1,4 +1,5 @@
 ﻿@page "/"
+@inject NavigationManager navi
 
 <PageTitle>Index</PageTitle>
 
@@ -7,3 +8,6 @@
 Welcome to your new app.
 
 <SurveyPrompt Title="How is Blazor working for you?" />
+
+
+@*@navi.counter_viewbyid(32)*@

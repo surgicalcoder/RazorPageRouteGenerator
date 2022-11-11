@@ -133,6 +133,12 @@ namespace GoLive.Generator.RazorPageRoute.Generator
             source.AppendLine("using System.Threading.Tasks;");
             source.AppendLine("using System.Net.Http.Json;");
             source.AppendLine("using System.Collections.Generic;");
+            
+            if (config.OutputExtensionMethod)
+            {
+                source.AppendLine("using Microsoft.AspNetCore.Components;");
+            }
+            
             logBuilder.AppendLine("Adding namespaces");
 
             var routes = context.Compilation.SyntaxTrees.Select(t => context.Compilation.GetSemanticModel(t)).Select(Scanner.ScanForPageRoutes).SelectMany(c => c).ToArray();
@@ -170,39 +176,12 @@ namespace GoLive.Generator.RazorPageRoute.Generator
                     }
                 }));
 
-                logBuilder.AppendLine("Before creation #1");
-                source.AppendLine($"public static string {SlugName} ({parameterString})");
-                source.AppendOpenCurlyBracketLine();
+                OutputRouteStringMethod(source, SlugName, parameterString, routeTemplate, pageRoute);
 
-                logBuilder.AppendLine("Foreach Param");
-
-                if (routeTemplate.Segments.Any(e => e.IsParameter))
+                if (config.OutputExtensionMethod)
                 {
-                    source.AppendIndent();
-                    source.Append("string url = $\"", false);
-                    foreach (var seg in routeTemplate.Segments)
-                    {
-                        if (seg.IsParameter)
-                        {
-                            source.Append($"/{{{seg.Value}.ToString()}}", false);
-                        }
-                        else
-                        {
-                            source.Append($"/{seg.Value}", false);
-                        }
-
-                    }
-                    source.Append("\";\n", false);
-                    source.AppendLine($"return url;");
+                    OutputRouteExtensionMethod(source, SlugName, parameterString, routeTemplate, pageRoute);
                 }
-
-                else
-                {
-                    source.AppendLine($"string url = \"{pageRoute.Route}\";");
-                    source.AppendLine($"return url;");
-                }
-
-                source.AppendCloseCurlyBracketLine();
             }
             logBuilder.AppendLine("Done, returning");
             source.AppendCloseCurlyBracketLine();
@@ -211,6 +190,88 @@ namespace GoLive.Generator.RazorPageRoute.Generator
             var outp = source.ToString();
 
             return outp;
+        }
+        
+        
+        private void OutputRouteExtensionMethod(SourceStringBuilder source, string SlugName, string parameterString, RouteTemplate routeTemplate, PageRoute pageRoute)
+        {
+            logBuilder.AppendLine("OutputRouteExtensionMethod");
+
+            if (string.IsNullOrWhiteSpace(parameterString))
+            {
+                source.AppendLine($"public static void {SlugName} (this NavigationManager manager, bool forceLoad = false, bool replace=false)");
+            }
+            else
+            {
+                source.AppendLine($"public static void {SlugName} (this NavigationManager manager, {parameterString}, bool forceLoad = false, bool replace=false)");
+            }
+            source.AppendOpenCurlyBracketLine();
+
+            if (routeTemplate.Segments.Any(e => e.IsParameter))
+            {
+                source.AppendIndent();
+                source.Append("string url = $\"", false);
+
+                foreach (var seg in routeTemplate.Segments)
+                {
+                    if (seg.IsParameter)
+                    {
+                        source.Append($"/{{{seg.Value}.ToString()}}", false);
+                    }
+                    else
+                    {
+                        source.Append($"/{seg.Value}", false);
+                    }
+                }
+
+                source.Append("\";\n", false);
+                source.AppendLine("manager.NavigateTo(url, forceLoad, replace);");
+            }
+
+            else
+            {
+                source.AppendLine($"string url = \"{pageRoute.Route}\";");
+                source.AppendLine("manager.NavigateTo(url, forceLoad, replace);");
+            }
+
+            source.AppendCloseCurlyBracketLine();
+        }
+
+        private void OutputRouteStringMethod(SourceStringBuilder source, string SlugName, string parameterString, RouteTemplate routeTemplate, PageRoute pageRoute)
+        {
+            logBuilder.AppendLine("Before creation #1");
+            source.AppendLine($"public static string {SlugName} ({parameterString})");
+            source.AppendOpenCurlyBracketLine();
+            logBuilder.AppendLine("Foreach Param");
+
+            if (routeTemplate.Segments.Any(e => e.IsParameter))
+            {
+                source.AppendIndent();
+                source.Append("string url = $\"", false);
+
+                foreach (var seg in routeTemplate.Segments)
+                {
+                    if (seg.IsParameter)
+                    {
+                        source.Append($"/{{{seg.Value}.ToString()}}", false);
+                    }
+                    else
+                    {
+                        source.Append($"/{seg.Value}", false);
+                    }
+                }
+
+                source.Append("\";\n", false);
+                source.AppendLine($"return url;");
+            }
+
+            else
+            {
+                source.AppendLine($"string url = \"{pageRoute.Route}\";");
+                source.AppendLine($"return url;");
+            }
+
+            source.AppendCloseCurlyBracketLine();
         }
 
         private Settings LoadConfig(GeneratorExecutionContext context, string defaultNamespace)

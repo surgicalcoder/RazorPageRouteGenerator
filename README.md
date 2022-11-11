@@ -25,7 +25,8 @@ Once that's done, add the settings file and change as required:
   "Namespace": "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly",
   "ClassName": "PageRoutes",
   "OutputToFile": "PageRoutes.cs",
-  "OutputLastCreatedTime": false
+  "OutputLastCreatedTime": false,
+  "OutputExtensionMethod" : true
 }
 ```
 

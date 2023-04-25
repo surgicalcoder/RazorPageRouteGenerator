@@ -13,6 +13,9 @@
 @code {
     private int currentCount = 0;
 
+    [SupplyParameterFromQuery]
+    public string QSInput { get; set; }
+    
     private void IncrementCount()
     {
         currentCount++;

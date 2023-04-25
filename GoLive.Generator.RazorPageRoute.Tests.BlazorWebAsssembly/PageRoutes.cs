@@ -1,4 +1,4 @@
-// This file was generated on Fri, 11 Nov 2022 22:27:45 GMT
+// This file was generated on Tue, 25 Apr 2023 09:38:35 GMT
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -10,39 +10,81 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly
 {
     public static class PageRoutes
     {
-        public static string counter()
+        public static string counter(System.String QSInput = default)
         {
             string url = "/counter";
+            Dictionary<string, string> queryString = new();
+            if (!string.IsNullOrWhiteSpace(QSInput))
+            {
+                queryString.Add("QSInput", QSInput.ToString());
+            }
+
+            url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);
             return url;
         }
 
-        public static void counter(this NavigationManager manager, bool forceLoad = false, bool replace = false)
+        public static void counter(this NavigationManager manager, System.String QSInput = default, bool forceLoad = false, bool replace = false)
         {
             string url = "/counter";
+            Dictionary<string, string> queryString = new();
+            if (!string.IsNullOrWhiteSpace(QSInput))
+            {
+                queryString.Add("QSInput", QSInput.ToString());
+            }
+
+            url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);
             manager.NavigateTo(url, forceLoad, replace);
         }
 
-        public static string counter_view(string id)
+        public static string counter_view(string id, System.String QSInput = default)
         {
             string url = $"/counter/view/{id.ToString()}";
+            Dictionary<string, string> queryString = new();
+            if (!string.IsNullOrWhiteSpace(QSInput))
+            {
+                queryString.Add("QSInput", QSInput.ToString());
+            }
+
+            url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);
             return url;
         }
 
-        public static void counter_view(this NavigationManager manager, string id, bool forceLoad = false, bool replace = false)
+        public static void counter_view(this NavigationManager manager, string id, System.String QSInput = default, bool forceLoad = false, bool replace = false)
         {
             string url = $"/counter/view/{id.ToString()}";
+            Dictionary<string, string> queryString = new();
+            if (!string.IsNullOrWhiteSpace(QSInput))
+            {
+                queryString.Add("QSInput", QSInput.ToString());
+            }
+
+            url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);
             manager.NavigateTo(url, forceLoad, replace);
         }
 
-        public static string counter_viewbyid(System.Int32 id)
+        public static string counter_viewbyid(System.Int32 id, System.String QSInput = default)
         {
             string url = $"/counter/viewbyid/{id.ToString()}";
+            Dictionary<string, string> queryString = new();
+            if (!string.IsNullOrWhiteSpace(QSInput))
+            {
+                queryString.Add("QSInput", QSInput.ToString());
+            }
+
+            url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);
             return url;
         }
 
-        public static void counter_viewbyid(this NavigationManager manager, System.Int32 id, bool forceLoad = false, bool replace = false)
+        public static void counter_viewbyid(this NavigationManager manager, System.Int32 id, System.String QSInput = default, bool forceLoad = false, bool replace = false)
         {
             string url = $"/counter/viewbyid/{id.ToString()}";
+            Dictionary<string, string> queryString = new();
+            if (!string.IsNullOrWhiteSpace(QSInput))
+            {
+                queryString.Add("QSInput", QSInput.ToString());
+            }
+
+            url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);
             manager.NavigateTo(url, forceLoad, replace);
         }
 

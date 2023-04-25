@@ -76,10 +76,7 @@ namespace GoLive.Generator.RazorPageRoute.Generator
                 ReportError(e, Location.None);
                 logBuilder.AppendLine(e.ToString());
 
-                if (!string.IsNullOrWhiteSpace(config.DebugOutputFile))
-                {
-                    File.WriteAllText(config.DebugOutputFile.Replace("(id)", Guid.NewGuid().ToString("N")), logBuilder.ToString());
-                }
+
 
                 throw;
             }
@@ -89,6 +86,10 @@ namespace GoLive.Generator.RazorPageRoute.Generator
             }
             finally
             {
+                if (!string.IsNullOrWhiteSpace(config.DebugOutputFile))
+                {
+                    File.WriteAllText(config.DebugOutputFile.Replace("(id)", Guid.NewGuid().ToString("N")), logBuilder.ToString());
+                }
             }
         }
         private readonly DiagnosticDescriptor _errorRuleWithLog = new DiagnosticDescriptor("RPG0001", "RPG0001: Error in source generator", "Error in source generator<{0}>: '{1}'. Log file details: '{2}'.", "SourceGenerator", DiagnosticSeverity.Error, isEnabledByDefault: true);
@@ -162,7 +163,7 @@ namespace GoLive.Generator.RazorPageRoute.Generator
 
                 string SlugName = Slug.Create(pageRoute.Route.Length > 1 ? string.Join(".", routeTemplate.Segments.Where(f => !f.IsParameter).Select(f => f.Value)) : "Home");
 
-                var parameterString = string.Join(", ", routeTemplate.Segments.Where(e => e.IsParameter).Select(delegate (TemplateSegment segment)
+                var routeSegments = routeTemplate.Segments.Where(e => e.IsParameter).Select(delegate(TemplateSegment segment)
                 {
                     var constraint = segment.Constraints.Any() ? segment.Constraints.FirstOrDefault().GetConstraintType() : null;
 
@@ -170,11 +171,16 @@ namespace GoLive.Generator.RazorPageRoute.Generator
                     {
                         return $"string {segment.Value}";
                     }
-                    else
-                    {
-                        return segment.IsOptional ? $"{constraint.FullName}? {segment.Value}" : $"{constraint.FullName} {segment.Value}";
-                    }
-                }));
+
+                    return segment.IsOptional ? $"{constraint.FullName}? {segment.Value}" : $"{constraint.FullName} {segment.Value}";
+                }).ToList();
+
+                if (pageRoute.QueryString is {Count: > 0})
+                {
+                    routeSegments.AddRange(pageRoute.QueryString.Select(prqp => $"{prqp.Type} {prqp.Name} = default"));
+                }
+
+                var parameterString = string.Join(", ", routeSegments);
 
                 OutputRouteStringMethod(source, SlugName, parameterString, routeTemplate, pageRoute);
 
@@ -225,21 +231,44 @@ namespace GoLive.Generator.RazorPageRoute.Generator
                 }
 
                 source.Append("\";\n", false);
-                source.AppendLine("manager.NavigateTo(url, forceLoad, replace);");
             }
-
             else
             {
                 source.AppendLine($"string url = \"{pageRoute.Route}\";");
-                source.AppendLine("manager.NavigateTo(url, forceLoad, replace);");
+            }
+            
+            if (pageRoute.QueryString is { Count: > 0 })
+            {
+                source.AppendLine("Dictionary<string, string> queryString=new();");
+
+                foreach (var pageRouteQuerystringParameter in pageRoute.QueryString)
+                {
+                    if (pageRouteQuerystringParameter.Type == "System.String")
+                    {
+                        source.AppendLine($"if (!string.IsNullOrWhiteSpace({pageRouteQuerystringParameter.Name})) ");
+                    }
+                    else
+                    {
+                        source.AppendLine($"if ({pageRouteQuerystringParameter.Name} != default) ");
+                    }
+
+                    source.AppendOpenCurlyBracketLine();
+                    source.AppendLine($"queryString.Add(\"{pageRouteQuerystringParameter.Name}\", {pageRouteQuerystringParameter.Name}.ToString());");
+                    source.AppendCloseCurlyBracketLine();
+                }
+
+                source.AppendLine("");
+                source.AppendLine("url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);");
             }
 
+            source.AppendLine("manager.NavigateTo(url, forceLoad, replace);");
             source.AppendCloseCurlyBracketLine();
         }
 
         private void OutputRouteStringMethod(SourceStringBuilder source, string SlugName, string parameterString, RouteTemplate routeTemplate, PageRoute pageRoute)
         {
             logBuilder.AppendLine("Before creation #1");
+            
             source.AppendLine($"public static string {SlugName} ({parameterString})");
             source.AppendOpenCurlyBracketLine();
             logBuilder.AppendLine("Foreach Param");
@@ -262,14 +291,37 @@ namespace GoLive.Generator.RazorPageRoute.Generator
                 }
 
                 source.Append("\";\n", false);
-                source.AppendLine($"return url;");
             }
-
             else
             {
                 source.AppendLine($"string url = \"{pageRoute.Route}\";");
-                source.AppendLine($"return url;");
             }
+            
+            if (pageRoute.QueryString is { Count: > 0 })
+            {
+                source.AppendLine("Dictionary<string, string> queryString=new();");
+
+                foreach (var pageRouteQuerystringParameter in pageRoute.QueryString)
+                {
+                    if (pageRouteQuerystringParameter.Type == "System.String")
+                    {
+                        source.AppendLine($"if (!string.IsNullOrWhiteSpace({pageRouteQuerystringParameter.Name})) ");
+                    }
+                    else
+                    {
+                        source.AppendLine($"if ({pageRouteQuerystringParameter.Name} != default) ");
+                    }
+
+                    source.AppendOpenCurlyBracketLine();
+                    source.AppendLine($"queryString.Add(\"{pageRouteQuerystringParameter.Name}\", {pageRouteQuerystringParameter.Name}.ToString());");
+                    source.AppendCloseCurlyBracketLine();
+                }
+
+                source.AppendLine("");
+                source.AppendLine("url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);");
+            }
+
+            source.AppendLine($"return url;");
 
             source.AppendCloseCurlyBracketLine();
         }

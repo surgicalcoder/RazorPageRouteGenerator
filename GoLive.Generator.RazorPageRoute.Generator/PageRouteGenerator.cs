@@ -15,6 +15,7 @@ namespace GoLive.Generator.RazorPageRoute.Generator
     {
         private GeneratorExecutionContext executionContext;
         private StringBuilder logBuilder;
+        private static SymbolDisplayFormat symbolDisplayFormat = new SymbolDisplayFormat(typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces);
         public void Initialize(GeneratorInitializationContext context)
         {
             //if (!Debugger.IsAttached)
@@ -177,7 +178,7 @@ namespace GoLive.Generator.RazorPageRoute.Generator
 
                 if (pageRoute.QueryString is {Count: > 0})
                 {
-                    routeSegments.AddRange(pageRoute.QueryString.Select(prqp => $"{prqp.Type} {prqp.Name} = default"));
+                    routeSegments.AddRange(pageRoute.QueryString.Select(prqp => $"{prqp.Type.ToDisplayString()}{(prqp.Type.IsReferenceType ? "?" : "")} {prqp.Name} = default"));
                 }
 
                 var parameterString = string.Join(", ", routeSegments);
@@ -243,7 +244,7 @@ namespace GoLive.Generator.RazorPageRoute.Generator
 
                 foreach (var pageRouteQuerystringParameter in pageRoute.QueryString)
                 {
-                    if (pageRouteQuerystringParameter.Type == "System.String")
+                    if (pageRouteQuerystringParameter.Type.ToDisplayString(symbolDisplayFormat) == "System.String")
                     {
                         source.AppendLine($"if (!string.IsNullOrWhiteSpace({pageRouteQuerystringParameter.Name})) ");
                     }
@@ -303,7 +304,7 @@ namespace GoLive.Generator.RazorPageRoute.Generator
 
                 foreach (var pageRouteQuerystringParameter in pageRoute.QueryString)
                 {
-                    if (pageRouteQuerystringParameter.Type == "System.String")
+                    if (pageRouteQuerystringParameter.Type.ToDisplayString(symbolDisplayFormat) == "System.String")
                     {
                         source.AppendLine($"if (!string.IsNullOrWhiteSpace({pageRouteQuerystringParameter.Name})) ");
                     }

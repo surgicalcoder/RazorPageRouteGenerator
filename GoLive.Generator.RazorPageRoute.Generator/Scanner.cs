@@ -8,8 +8,6 @@ namespace GoLive.Generator.RazorPageRoute.Generator
 {
     public static class Scanner
     {
-        private static SymbolDisplayFormat symbolDisplayFormat = new SymbolDisplayFormat(typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces);
-        
         public static IEnumerable<PageRoute> ScanForPageRoutes(SemanticModel semantic)
         {
             var baseClass = semantic.Compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Components.ComponentBase");
@@ -40,7 +38,7 @@ namespace GoLive.Generator.RazorPageRoute.Generator
             var attributes = FindAttributes(classSymbol, a => a.ToString() == "Microsoft.AspNetCore.Components.RouteAttribute");
 
             var queryStringParams = classSymbol.GetMembers().OfType<IPropertySymbol>();
-            var querystringParameters = (from qsParam in queryStringParams let qsAttr = FindAttribute(qsParam, a => a.ToString() == "Microsoft.AspNetCore.Components.SupplyParameterFromQueryAttribute") where qsAttr != null select new PageRouteQuerystringParameter(qsAttr?.ConstructorArguments.FirstOrDefault().Value?.ToString() ?? qsParam.Name, qsParam.Type.ToDisplayString(symbolDisplayFormat))).ToList();
+            var querystringParameters = (from qsParam in queryStringParams let qsAttr = FindAttribute(qsParam, a => a.ToString() == "Microsoft.AspNetCore.Components.SupplyParameterFromQueryAttribute") where qsAttr != null select new PageRouteQuerystringParameter(qsAttr?.ConstructorArguments.FirstOrDefault().Value?.ToString() ?? qsParam.Name, qsParam.Type)).ToList();
 
             foreach (var attributeData in attributes)
             {

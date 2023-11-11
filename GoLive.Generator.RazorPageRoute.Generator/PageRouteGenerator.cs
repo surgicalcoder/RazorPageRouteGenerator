@@ -51,19 +51,35 @@ namespace GoLive.Generator.RazorPageRoute.Generator
 
                 if (!string.IsNullOrWhiteSpace(source))
                 {
-                    if (string.IsNullOrWhiteSpace(config.OutputToFile))
+                    if (string.IsNullOrWhiteSpace(config.OutputToFile) && config.OutputToFiles.Count == 0)
                     {
                         context.AddSource("PageRoutes.g.cs", source);
                     }
                     else
                     {
-                        if (File.Exists(config.OutputToFile))
+                        if (config.OutputToFiles.Count > 0)
                         {
-                            logBuilder.AppendLine("Output file exists, deleting");
-                            File.Delete(config.OutputToFile);
+                            foreach (var configOutputToFile in config.OutputToFiles)
+                            {
+                                if (File.Exists(configOutputToFile))
+                                {
+                                    File.Delete(configOutputToFile);
+                                }
+
+                                File.WriteAllText(configOutputToFile, source);
+                            }
                         }
 
-                        File.WriteAllText(config.OutputToFile, source);
+                        if (!string.IsNullOrWhiteSpace(config.OutputToFile))
+                        {
+                            if (File.Exists(config.OutputToFile))
+                            {
+                                logBuilder.AppendLine("Output file exists, deleting");
+                                File.Delete(config.OutputToFile);
+                            }
+
+                            File.WriteAllText(config.OutputToFile, source);
+                        }
                     }
                 }
                 else
@@ -118,7 +134,7 @@ namespace GoLive.Generator.RazorPageRoute.Generator
             {
                 location = Location.None;
             }
-            executionContext.ReportDiagnostic(Diagnostic.Create(_errorRuleWithLog, location, GetType().Name, e.Message, "g:\\scratch\\source-code-log-path.txt"));
+            executionContext.ReportDiagnostic(Diagnostic.Create(_errorRuleWithLog, location, GetType().Name, e.Message));
         }
 
 
@@ -147,7 +163,7 @@ namespace GoLive.Generator.RazorPageRoute.Generator
             logBuilder.AppendLine("Got Routes");
             source.AppendLine($"namespace {config.Namespace}");
             source.AppendOpenCurlyBracketLine();
-            source.AppendLine($"public static class {config.ClassName}");
+            source.AppendLine($"public static partial class {config.ClassName}");
             source.AppendOpenCurlyBracketLine();
 
             if (routes.Length == 0)
@@ -352,6 +368,15 @@ namespace GoLive.Generator.RazorPageRoute.Generator
             {
                 var fullPath = Path.Combine(configFileDirectory, config.OutputToFile);
                 config.OutputToFile = Path.GetFullPath(fullPath);
+            }
+
+            if (config.OutputToFiles != null && config.OutputToFiles.Any())
+            {
+                config.OutputToFiles = config.OutputToFiles.Select(r =>
+                {
+                    var fullPath = Path.Combine(configFileDirectory, r);
+                    return fullPath;
+                }).ToList();
             }
 
             return config;

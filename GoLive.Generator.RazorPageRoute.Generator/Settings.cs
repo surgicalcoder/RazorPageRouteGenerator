@@ -1,4 +1,6 @@
-﻿namespace GoLive.Generator.RazorPageRoute.Generator
+﻿using System.Collections.Generic;
+
+namespace GoLive.Generator.RazorPageRoute.Generator
 {
     public class Settings
     {
@@ -6,6 +8,7 @@
         public string ClassName { get; set; }
 
         public string OutputToFile { get; set; }
+        public List<string> OutputToFiles { get; set; } = new();
 
         public string DebugOutputFile { get; set; }
 

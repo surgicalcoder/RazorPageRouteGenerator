@@ -1,4 +1,4 @@
-// This file was generated on Tue, 25 Apr 2023 17:12:29 GMT
+// This file was generated on Sat, 11 Nov 2023 12:21:22 GMT
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly
 {
-    public static class PageRoutes
+    public static partial class PageRoutes
     {
         public static string counter(string? QSInput = default)
         {

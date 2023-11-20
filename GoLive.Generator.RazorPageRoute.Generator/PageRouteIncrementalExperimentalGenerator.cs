@@ -79,12 +79,6 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
         var config = LoadConfig(input.Left.Right, input.defaultNamespace);
 
         GenerateOutput(productionContext, config, input.Left.Left);
-
-        foreach (var pageRoutes in input.Left.Left.GroupBy(e => e.Name))
-        {
-            var blarg = pageRoutes.Count().ToString();
-            productionContext.AddSource(pageRoutes.Key + ".g.cs", $"// {blarg}");
-        }
     }
 
     private void GenerateOutput(SourceProductionContext productionContext, Settings config, List<PageRoute> pageRoutes)
@@ -168,10 +162,10 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
                 {
                     foreach (var configOutputToFile in config.OutputToFiles)
                     {
-                        if (File.Exists(configOutputToFile))
+                        /*if (File.Exists(configOutputToFile))
                         {
                             File.Delete(configOutputToFile);
-                        }
+                        }*/
 
                         File.WriteAllText(configOutputToFile, sourceOutput);
                     }
@@ -179,10 +173,10 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
 
                 if (!string.IsNullOrWhiteSpace(config.OutputToFile))
                 {
-                    if (File.Exists(config.OutputToFile))
+                    /*if (File.Exists(config.OutputToFile))
                     {
                         File.Delete(config.OutputToFile);
-                    }
+                    }*/
 
                     File.WriteAllText(config.OutputToFile, sourceOutput);
                 }

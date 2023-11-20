@@ -1,4 +1,4 @@
-// This file was generated on Mon, 20 Nov 2023 18:54:51 GMT
+// This file was generated on Mon, 20 Nov 2023 18:59:19 GMT
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -14,9 +14,9 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly
         {
             string url = "/counter";
             Dictionary<string, string> queryString = new();
-            if (QSInput != default)
+            if (!string.IsNullOrWhiteSpace(QSInput))
             {
-                queryString.Add("QSInput ", QSInput.ToString());
+                queryString.Add("QSInput", QSInput.ToString());
             }
 
             url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);
@@ -27,9 +27,9 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly
         {
             string url = "/counter";
             Dictionary<string, string> queryString = new();
-            if (QSInput != default)
+            if (!string.IsNullOrWhiteSpace(QSInput))
             {
-                queryString.Add("QSInput ", QSInput.ToString());
+                queryString.Add("QSInput", QSInput.ToString());
             }
 
             url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);
@@ -40,9 +40,9 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly
         {
             string url = $"/counter/view/{id.ToString()}";
             Dictionary<string, string> queryString = new();
-            if (QSInput != default)
+            if (!string.IsNullOrWhiteSpace(QSInput))
             {
-                queryString.Add("QSInput ", QSInput.ToString());
+                queryString.Add("QSInput", QSInput.ToString());
             }
 
             url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);
@@ -53,9 +53,9 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly
         {
             string url = $"/counter/view/{id.ToString()}";
             Dictionary<string, string> queryString = new();
-            if (QSInput != default)
+            if (!string.IsNullOrWhiteSpace(QSInput))
             {
-                queryString.Add("QSInput ", QSInput.ToString());
+                queryString.Add("QSInput", QSInput.ToString());
             }
 
             url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);
@@ -66,9 +66,9 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly
         {
             string url = $"/counter/viewbyid/{id.ToString()}";
             Dictionary<string, string> queryString = new();
-            if (QSInput != default)
+            if (!string.IsNullOrWhiteSpace(QSInput))
             {
-                queryString.Add("QSInput ", QSInput.ToString());
+                queryString.Add("QSInput", QSInput.ToString());
             }
 
             url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);
@@ -79,9 +79,9 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly
         {
             string url = $"/counter/viewbyid/{id.ToString()}";
             Dictionary<string, string> queryString = new();
-            if (QSInput != default)
+            if (!string.IsNullOrWhiteSpace(QSInput))
             {
-                queryString.Add("QSInput ", QSInput.ToString());
+                queryString.Add("QSInput", QSInput.ToString());
             }
 
             url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);
@@ -94,7 +94,7 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly
             Dictionary<string, string> queryString = new();
             if (Http != default)
             {
-                queryString.Add("Http ", Http.ToString());
+                queryString.Add("Http", Http.ToString());
             }
 
             url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);
@@ -107,7 +107,7 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly
             Dictionary<string, string> queryString = new();
             if (Http != default)
             {
-                queryString.Add("Http ", Http.ToString());
+                queryString.Add("Http", Http.ToString());
             }
 
             url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);
@@ -120,7 +120,7 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly
             Dictionary<string, string> queryString = new();
             if (navi != default)
             {
-                queryString.Add("navi ", navi.ToString());
+                queryString.Add("navi", navi.ToString());
             }
 
             url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);
@@ -133,7 +133,7 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly
             Dictionary<string, string> queryString = new();
             if (navi != default)
             {
-                queryString.Add("navi ", navi.ToString());
+                queryString.Add("navi", navi.ToString());
             }
 
             url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);

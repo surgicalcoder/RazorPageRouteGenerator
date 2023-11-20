@@ -25,7 +25,7 @@ public static class Scanner
         var queryStringParams = input.Members.OfType<PropertyDeclarationSyntax>();
 
         var querystringParameters = queryStringParams.Select(e => (e, GetForAttributes(e.AttributeLists))).Where(f => f.Item2.Any())
-            .Select(f => new PageRouteQuerystringParameter(f.e.Identifier.ToFullString(), f.e.Type.ToFullString())).ToList(); 
+            .Select(f => new PageRouteQuerystringParameter(f.e.Identifier.ToFullString().Trim(), f.e.Type.ToFullString().Trim())).ToList(); 
             
         foreach (var attributeData in classAttributes)
         {
@@ -43,15 +43,10 @@ public static class Scanner
             foreach (var attributeSyntaxAttribute in attributeSyntax.Attributes)
             {
                 AttributeContainer retr = new();
-                retr.Name = attributeSyntaxAttribute.Name.NormalizeWhitespace().ToFullString();
+                retr.Name = attributeSyntaxAttribute.Name.NormalizeWhitespace().ToFullString().Trim();
                 retr.Values = attributeSyntaxAttribute.ArgumentList?.Arguments.Select(r => (r.Expression as LiteralExpressionSyntax).Token.Value).ToList();
                 yield return retr;
             }
         }
-    }
-    public class AttributeContainer
-    {
-        public string Name { get; set; }
-        public List<object?> Values { get; set; } = new();
     }
 }

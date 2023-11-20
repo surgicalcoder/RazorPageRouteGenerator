@@ -4,19 +4,23 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-	  <LangVersion>10.0</LangVersion>
-    <UseRazorSourceGenerator>false</UseRazorSourceGenerator>
+    <LangVersion>10.0</LangVersion>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
-
+  <ItemGroup>
+    <CompilerVisibleProperty Include="CompilerGeneratedFilesOutputPath" />
+    <CompilerVisibleProperty Include="EmitCompilerGeneratedFiles" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
   </ItemGroup>
-<ItemGroup>
-	<AdditionalFiles Include="RazorPageRoutes.json" />
-</ItemGroup>
-<ItemGroup>
-  <ProjectReference Include="..\GoLive.Generator.RazorPageRoute.Generator\GoLive.Generator.RazorPageRoute.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-</ItemGroup>
+  <ItemGroup>
+      <AdditionalFiles Include="RazorPageRoutes.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GoLive.Generator.RazorPageRoute.Generator\GoLive.Generator.RazorPageRoute.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
 </Project>

@@ -20,23 +20,24 @@ public static class Scanner
         
     private static IEnumerable<PageRoute> ToRoute(ClassDeclarationSyntax input)
     {
-        var classAttributes = GetForAttributes(input.AttributeLists);
+        var classAttributes = GetAttributes(input.AttributeLists);
             
         var queryStringParams = input.Members.OfType<PropertyDeclarationSyntax>();
 
-        var querystringParameters = queryStringParams.Select(e => (e, GetForAttributes(e.AttributeLists))).Where(f => f.Item2.Any( e=>e.Name.ToLowerInvariant() is "supplyparameterfromqueryattribute" or "microsoft.aspnetcore.components.supplyparameterfromqueryattribute" or "supplyparameterfromquery" ))
+        var querystringParameters = queryStringParams.Select(e => 
+                (e, GetAttributes(e.AttributeLists))).Where(f => f.Item2.Any( e=>e.Name.ToLowerInvariant() is "supplyparameterfromqueryattribute" or "microsoft.aspnetcore.components.supplyparameterfromqueryattribute" or "supplyparameterfromquery" ))
             .Select(f => new PageRouteQuerystringParameter(f.e.Identifier.ToFullString().Trim(), f.e.Type.ToFullString().Trim())).ToList(); 
             
-        foreach (var attributeData in classAttributes)
+        foreach (var attributeData in classAttributes.Where(r=>r.Name == "global::Microsoft.AspNetCore.Components.RouteAttribute"))
         {
-            var route = attributeData?.Values.FirstOrDefault().ToString() ?? string.Empty;
+            var route = attributeData?.Values.FirstOrDefault()?.ToString() ?? string.Empty;
 
             yield return new PageRoute(input.Identifier.Text, route, querystringParameters);
         }
     }
         
         
-    private static IEnumerable<AttributeContainer> GetForAttributes(SyntaxList<AttributeListSyntax> input)
+    private static IEnumerable<AttributeContainer> GetAttributes(SyntaxList<AttributeListSyntax> input)
     {
         foreach (var attributeSyntax in input)
         {

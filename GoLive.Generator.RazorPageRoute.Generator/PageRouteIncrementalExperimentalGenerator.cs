@@ -20,27 +20,31 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var defaultNamespace = context.AnalyzerConfigOptionsProvider.Select((provider, _) => !provider.GlobalOptions.TryGetValue("build_property.rootnamespace", out var ns) ? "DefaultNamespace" : ns);
-
+        
         var items = context.AnalyzerConfigOptionsProvider.Select((provider, _) =>
         {
             if (!provider.GlobalOptions.TryGetValue("build_property.EmitCompilerGeneratedFiles", out var wibble))
             {
                 return null;
+                //return "ERROR: build_property.EmitCompilerGeneratedFiles not set";
             }
 
             if (wibble.ToLowerInvariant() != "true")
             {
                 return null;
+                //return $"ERROR: build_property.EmitCompilerGeneratedFiles is not true (value is {wibble.ToLowerInvariant()})";
             }
 
             if (!provider.GlobalOptions.TryGetValue("build_property.projectdir", out var projectDir))
             {
                 return null;
+                //return $"ERROR: build_property.projectdir is not set";
             }
 
             if (!provider.GlobalOptions.TryGetValue("build_property.compilergeneratedfilesoutputpath", out var generatedLocation))
             {
                 return null;
+                //return $"ERROR: build_property.compilergeneratedfilesoutputpath is not set";
             }
 
             return Path.Combine(projectDir, generatedLocation);

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.0" PrivateAssets="all"/>
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\GoLive.Generator.RazorPageRoute.Generator\GoLive.Generator.RazorPageRoute.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    </ItemGroup>
+    <ItemGroup>
+        <CompilerVisibleProperty Include="CompilerGeneratedFilesOutputPath" />
+        <CompilerVisibleProperty Include="EmitCompilerGeneratedFiles" />
+    </ItemGroup>
+    <ItemGroup>
+        <AdditionalFiles Include="RazorPageRoutes.json" />
+    </ItemGroup>
+</Project>

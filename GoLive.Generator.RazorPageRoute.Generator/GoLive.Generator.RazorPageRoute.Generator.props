@@ -1,0 +1,6 @@
+<Project>
+  <ItemGroup>
+    <CompilerVisibleProperty Include="CompilerGeneratedFilesOutputPath" />
+    <CompilerVisibleProperty Include="EmitCompilerGeneratedFiles" />
+  </ItemGroup>
+</Project>

@@ -70,6 +70,19 @@ public static class Slug
                         break;
 
                     case UnicodeCategory.LowercaseLetter:
+                        if (i == 0)
+                        {
+                            c = options.Culture != null ? char.ToUpper(c, options.Culture) : char.ToUpperInvariant(c);
+                        }
+                        else
+                        {
+                            if (sb[sb.Length - 1] == '_')
+                            {
+                                c = options.Culture != null ? char.ToUpper(c, options.Culture) : char.ToUpperInvariant(c);
+                            }
+                        }
+                        
+                        
                         if (options.ToUpper)
                         {
                             c = options.Culture != null ? char.ToUpper(c, options.Culture) : char.ToUpperInvariant(c);

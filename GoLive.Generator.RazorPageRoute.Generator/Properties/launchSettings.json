@@ -1,9 +1,13 @@
-﻿{
+{
   "$schema": "http://json.schemastore.org/launchsettings.json",
   "profiles": {
     "GoLive.Generator.RazorPageRoute.Generator": {
       "commandName": "DebugRoslynComponent",
       "targetProject": "../GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly/GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly.csproj"
+    },
+    "Web3": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "../GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly3/GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly3.csproj"
     }
   }
 }

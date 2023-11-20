@@ -24,7 +24,7 @@ public static class Scanner
             
         var queryStringParams = input.Members.OfType<PropertyDeclarationSyntax>();
 
-        var querystringParameters = queryStringParams.Select(e => (e, GetForAttributes(e.AttributeLists))).Where(f => f.Item2.Any())
+        var querystringParameters = queryStringParams.Select(e => (e, GetForAttributes(e.AttributeLists))).Where(f => f.Item2.Any( e=>e.Name.ToLowerInvariant() is "supplyparameterfromqueryattribute" or "microsoft.aspnetcore.components.supplyparameterfromqueryattribute" or "supplyparameterfromquery" ))
             .Select(f => new PageRouteQuerystringParameter(f.e.Identifier.ToFullString().Trim(), f.e.Type.ToFullString().Trim())).ToList(); 
             
         foreach (var attributeData in classAttributes)

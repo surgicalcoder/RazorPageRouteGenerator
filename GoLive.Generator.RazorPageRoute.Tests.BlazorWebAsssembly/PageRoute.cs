@@ -1,4 +1,4 @@
-// This file was generated on Mon, 20 Nov 2023 18:59:19 GMT
+// This file was generated on Mon, 20 Nov 2023 19:08:45 GMT
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -88,55 +88,27 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly
             manager.NavigateTo(url, forceLoad, replace);
         }
 
-        public static string fetchdata(HttpClient Http = default)
+        public static string fetchdata()
         {
             string url = "/fetchdata";
-            Dictionary<string, string> queryString = new();
-            if (Http != default)
-            {
-                queryString.Add("Http", Http.ToString());
-            }
-
-            url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);
             return url;
         }
 
-        public static void fetchdata(this NavigationManager manager, HttpClient Http = default, bool forceLoad = false, bool replace = false)
+        public static void fetchdata(this NavigationManager manager, bool forceLoad = false, bool replace = false)
         {
             string url = "/fetchdata";
-            Dictionary<string, string> queryString = new();
-            if (Http != default)
-            {
-                queryString.Add("Http", Http.ToString());
-            }
-
-            url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);
             manager.NavigateTo(url, forceLoad, replace);
         }
 
-        public static string Home(NavigationManager navi = default)
+        public static string Home()
         {
             string url = "/";
-            Dictionary<string, string> queryString = new();
-            if (navi != default)
-            {
-                queryString.Add("navi", navi.ToString());
-            }
-
-            url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);
             return url;
         }
 
-        public static void Home(this NavigationManager manager, NavigationManager navi = default, bool forceLoad = false, bool replace = false)
+        public static void Home(this NavigationManager manager, bool forceLoad = false, bool replace = false)
         {
             string url = "/";
-            Dictionary<string, string> queryString = new();
-            if (navi != default)
-            {
-                queryString.Add("navi", navi.ToString());
-            }
-
-            url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);
             manager.NavigateTo(url, forceLoad, replace);
         }
     }

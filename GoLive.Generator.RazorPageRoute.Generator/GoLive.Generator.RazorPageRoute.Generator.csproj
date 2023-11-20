@@ -1,28 +1,35 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	
 	<PropertyGroup>
-		<TargetFramework>netstandard2.0</TargetFramework>	
-		<LangVersion>latest</LangVersion>
-		
-		<PackageId>GoLive.Generator.RazorPageRoute</PackageId>
-		<Authors>SurgicalCoder</Authors>
-		<Company>N/A</Company>
-		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<Description>Generates strongly typed methods that return full URL for Razor and Blazor pages.</Description>
-		<Copyright>Copyright 2022 - SurgicalCoder</Copyright>
-		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<PublishRepositoryUrl>true</PublishRepositoryUrl>
-		<GenerateRepositoryUrlAttribute>true</GenerateRepositoryUrlAttribute>
-		<PackOnBuild>true</PackOnBuild>
-		<PackFolder>analyzers\cs</PackFolder>
-		<IsRoslynComponent>true</IsRoslynComponent>
-		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-		<CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
-		<IncludeBuildOutput>false</IncludeBuildOutput>
-		<DevelopmentDependency>true</DevelopmentDependency>
+		<TargetFramework>netstandard2.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <PackOnBuild>true</PackOnBuild>
+        <PackFolder>analyzers\cs</PackFolder>
+        <IsRoslynComponent>true</IsRoslynComponent>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
+        <IncludeBuildOutput>true</IncludeBuildOutput>
+        <DevelopmentDependency>true</DevelopmentDependency>
+
+        <PackageId>GoLive.Generator.RazorPageRoute</PackageId>
+        <Authors>SurgicalCoder</Authors>
+        <Company>N/A</Company>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Description>Generates strongly typed methods that return full URL for Razor and Blazor pages.</Description>
+        <Copyright>Copyright 2023 - SurgicalCoder</Copyright>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <GenerateRepositoryUrlAttribute>true</GenerateRepositoryUrlAttribute>
+        <PackOnBuild>true</PackOnBuild>
+        <IsRoslynComponent>true</IsRoslynComponent>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <DevelopmentDependency>true</DevelopmentDependency>
 		<PackageProjectUrl>https://github.com/surgicalcoder/RazorPageRouteGenerator</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/surgicalcoder/RazorPageRouteGenerator</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.7.0" />

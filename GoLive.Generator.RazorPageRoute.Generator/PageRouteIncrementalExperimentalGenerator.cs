@@ -70,7 +70,7 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
                 }
             }
 
-            return retr;
+            return retr.DistinctBy(e=>e.Route).ToList();
         });
 
         var configFiles = context.AdditionalTextsProvider.Where(IsConfigurationFile);
@@ -85,7 +85,7 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
         GenerateOutput(productionContext, config, input.Left.Left);
     }
 
-    private void GenerateOutput(SourceProductionContext productionContext, Settings config, List<PageRoute> pageRoutes)
+    public static void GenerateOutput(SourceProductionContext productionContext, Settings config, List<PageRoute> pageRoutes)
     {
         var source = new SourceStringBuilder();
 
@@ -188,7 +188,7 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
         }
     }
 
-    private void OutputRouteStringMethod(SourceStringBuilder source, string SlugName, string parameterString, RouteTemplate routeTemplate, PageRoute pageRoute)
+    private static void OutputRouteStringMethod(SourceStringBuilder source, string SlugName, string parameterString, RouteTemplate routeTemplate, PageRoute pageRoute)
     {
         source.AppendLine($"public static string {SlugName} ({parameterString})");
         source.AppendOpenCurlyBracketLine();
@@ -247,7 +247,7 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
     }
 
 
-    private void OutputRouteExtensionMethod(SourceStringBuilder source, string SlugName, string parameterString, RouteTemplate routeTemplate, PageRoute pageRoute)
+    private static void OutputRouteExtensionMethod(SourceStringBuilder source, string SlugName, string parameterString, RouteTemplate routeTemplate, PageRoute pageRoute)
     {
         if (string.IsNullOrWhiteSpace(parameterString))
         {
@@ -313,7 +313,7 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
     }
 
 
-    private static Settings LoadConfig(IEnumerable<AdditionalText> configFiles, string defaultNamespace)
+    public static Settings LoadConfig(IEnumerable<AdditionalText> configFiles, string defaultNamespace)
     {
         var configFilePath = configFiles.FirstOrDefault();
 
@@ -322,9 +322,15 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
             return null;
         }
 
-        var jsonString = File.ReadAllText(configFilePath.Path);
+        var filePath = configFilePath.Path;
+        return LoadConfigFromFile(filePath, defaultNamespace);
+    }
+
+    public static Settings LoadConfigFromFile(string filePath, string defaultNamespace)
+    {
+        var jsonString = File.ReadAllText(filePath);
         var config = JsonSerializer.Deserialize<Settings>(jsonString);
-        var configFileDirectory = Path.GetDirectoryName(configFilePath.Path);
+        var configFileDirectory = Path.GetDirectoryName(filePath);
 
         if (string.IsNullOrEmpty(config.Namespace))
         {

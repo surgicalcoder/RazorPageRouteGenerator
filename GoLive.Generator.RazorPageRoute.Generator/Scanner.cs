@@ -45,7 +45,7 @@ public static class Scanner
             {
                 AttributeContainer retr = new();
                 retr.Name = attributeSyntaxAttribute.Name.NormalizeWhitespace().ToFullString().Trim();
-                retr.Values = attributeSyntaxAttribute.ArgumentList?.Arguments.Select(r => (r.Expression as LiteralExpressionSyntax).Token.Value).ToList();
+                retr.Values = attributeSyntaxAttribute.ArgumentList?.Arguments.Select(r => (r.Expression as LiteralExpressionSyntax)?.Token.Value).ToList();
                 yield return retr;
             }
         }

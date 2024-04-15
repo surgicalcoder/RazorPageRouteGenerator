@@ -30,6 +30,7 @@ namespace GoLive.Generator.RazorPageRoute.Generator
             "guid" => typeof(Guid),
             "int" => typeof(int),
             "long" => typeof(long),
+            "nonfile" => typeof(string),
             _ => null,
         };
     }

@@ -30,6 +30,7 @@ internal static class RouteConstraint
         "guid" => typeof(Guid),
         "int" => typeof(int),
         "long" => typeof(long),
+        "nonfile" => typeof(string),
         _ => null,
     };
 }

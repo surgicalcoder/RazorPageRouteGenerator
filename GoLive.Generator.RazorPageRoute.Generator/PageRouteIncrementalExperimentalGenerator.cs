@@ -121,6 +121,11 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
 
             var SlugName = Slug.Create(pageRoute.Route.Length > 1 ? string.Join(".", routeTemplate.Segments.Where(f => !f.IsParameter).Select(f => f.Value)) : "Home");
 
+            if (string.IsNullOrWhiteSpace(SlugName))
+            {
+                SlugName = pageRoute.Name;
+            }
+
             var routeSegments = routeTemplate.Segments.Where(e => e.IsParameter).Select(delegate(TemplateSegment segment)
             {
                 var constraint = segment.Constraints.Any() ? segment.Constraints.FirstOrDefault().GetConstraintType() : null;

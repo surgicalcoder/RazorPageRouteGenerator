@@ -1,4 +1,4 @@
-// This file was generated on Mon, 15 Apr 2024 19:46:15 GMT
+// This file was generated on Mon, 15 Apr 2024 22:33:54 GMT
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -109,6 +109,18 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly
         public static void Home(this NavigationManager manager, bool forceLoad = false, bool replace = false)
         {
             string url = "/";
+            manager.NavigateTo(url, forceLoad, replace);
+        }
+
+        public static string NotFound(System.String path)
+        {
+            string url = $"/{path.ToString()}";
+            return url;
+        }
+
+        public static void NotFound(this NavigationManager manager, System.String path, bool forceLoad = false, bool replace = false)
+        {
+            string url = $"/{path.ToString()}";
             manager.NavigateTo(url, forceLoad, replace);
         }
     }

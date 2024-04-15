@@ -6,7 +6,6 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using Microsoft.AspNetCore.Routing.Template;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -118,13 +117,13 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
 
         foreach (var pageRoute in pageRoutes)
         {
-            var routeTemplate = TemplateParser.Parse(pageRoute.Route);
+            var routeTemplate = TemplateParser.ParseTemplate(pageRoute.Route);
 
-            var SlugName = Slug.Create(pageRoute.Route.Length > 1 ? string.Join(".", routeTemplate.Segments.Where(f=> f.Parts.All(r=>!r.IsParameter)).SelectMany(r=>r.Parts.Select(e=>e.Text)) ) : "Home");
+            var SlugName = Slug.Create(pageRoute.Route.Length > 1 ? string.Join(".", routeTemplate.Segments.Where(f => !f.IsParameter).Select(f => f.Value)) : "Home");
 
-            var routeSegments = routeTemplate.Segments.Where(e => e.Parts.Any(f=>f.IsParameter)).Select(delegate(TemplateSegment segment)
+            var routeSegments = routeTemplate.Segments.Where(e => e.IsParameter).Select(delegate(TemplateSegment segment)
             {
-                var constraint = segment.Parts.Any(r=>r.InlineConstraints.Any()) ? segment.Constraints.FirstOrDefault().GetConstraintType() : null;
+                var constraint = segment.Constraints.Any() ? segment.Constraints.FirstOrDefault().GetConstraintType() : null;
 
                 if (constraint == null)
                 {
@@ -137,6 +136,7 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
             if (pageRoute.QueryString is { Count: > 0 })
             {
                 routeSegments.AddRange(pageRoute.QueryString.Select(prqp => $"{prqp.Type} {prqp.Name} = default"));
+                //routeSegments.AddRange(pageRoute.QueryString.Select(prqp => $"{prqp.Type}{(prqp.Type.IsReferenceType ? "?" : "")} {prqp.Name} = default"));
             }
 
             var parameterString = string.Join(", ", routeSegments);

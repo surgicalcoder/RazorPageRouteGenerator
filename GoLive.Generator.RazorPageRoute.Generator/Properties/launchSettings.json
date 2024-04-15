@@ -8,6 +8,10 @@
     "Web3": {
       "commandName": "DebugRoslynComponent",
       "targetProject": "../GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly3/GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly3.csproj"
+    },
+    "Web4": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "../../solutionfactory.core.mongotemplate/SolutionFactoryMVC.Web/SolutionFactoryMVC.Web.csproj"
     }
   }
 }

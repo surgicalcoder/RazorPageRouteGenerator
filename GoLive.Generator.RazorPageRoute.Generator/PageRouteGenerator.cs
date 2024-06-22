@@ -92,9 +92,6 @@ namespace GoLive.Generator.RazorPageRoute.Generator
             {
                 ReportError(e, Location.None);
                 logBuilder.AppendLine(e.ToString());
-
-
-
                 throw;
             }
             catch (Exception e)
@@ -108,7 +105,14 @@ namespace GoLive.Generator.RazorPageRoute.Generator
                     File.WriteAllText(config.DebugOutputFile.Replace("(id)", Guid.NewGuid().ToString("N")), logBuilder.ToString());
                 }
             }
+
+
+            if (config.Invokables is { Enabled: true })
+            {
+                GenerateJSInvokable(config, context);
+            }
         }
+
         private readonly DiagnosticDescriptor _errorRuleWithLog = new DiagnosticDescriptor("RPG0001", "RPG0001: Error in source generator", "Error in source generator<{0}>: '{1}'. Log file details: '{2}'.", "SourceGenerator", DiagnosticSeverity.Error, isEnabledByDefault: true);
         private readonly DiagnosticDescriptor _infoRule = new DiagnosticDescriptor("RPG0002", "RPG0002: Source code generated", "Source code generated<{0}>", "SourceGenerator", DiagnosticSeverity.Info, isEnabledByDefault: true);
         private readonly DiagnosticDescriptor _emptyFileRule = new DiagnosticDescriptor("RPG0003", "RPG0003: Source code output is empty", "Source code was not outputted", "SourceGenerator", DiagnosticSeverity.Warning, isEnabledByDefault: true);
@@ -375,6 +379,22 @@ namespace GoLive.Generator.RazorPageRoute.Generator
                 config.OutputToFile = Path.GetFullPath(fullPath);
             }
 
+            if (config.Invokables != null && (!string.IsNullOrWhiteSpace(config.Invokables.OutputToFile) || config.Invokables.OutputToFiles.Count > 0))
+            {
+                if (!string.IsNullOrWhiteSpace(config.Invokables.OutputToFile))
+                {
+                    var fullPath = Path.Combine(configFileDirectory, config.Invokables.OutputToFile);
+                    config.Invokables.OutputToFile = Path.GetFullPath(fullPath);
+                }
+
+                foreach (var outputFile in config.Invokables.OutputToFiles)
+                {
+                    var fullPath = Path.Combine(configFileDirectory, outputFile);
+                    var index = config.Invokables.OutputToFiles.IndexOf(outputFile);
+                    config.Invokables.OutputToFiles[index] = Path.GetFullPath(fullPath);
+                }
+            }
+
             if (config.OutputToFiles != null && config.OutputToFiles.Any())
             {
                 config.OutputToFiles = config.OutputToFiles.Select(r =>
@@ -385,6 +405,40 @@ namespace GoLive.Generator.RazorPageRoute.Generator
             }
 
             return config;
+        }
+        
+        
+        private void GenerateJSInvokable(Settings config, GeneratorExecutionContext context)
+        {
+            var invokables = context.Compilation.SyntaxTrees.Select(t => context.Compilation.GetSemanticModel(t)).Select(Scanner.ScanForInvokables).SelectMany(c => c).ToArray();
+
+            if (invokables.Length == 0)
+            {
+                return;
+            }
+
+            var jsBuilder = new StringBuilder();
+            jsBuilder.AppendLine($"const {config.Invokables.JSClassName} = {{");
+    
+            foreach (var (methodName, invokableName) in invokables)
+            {
+                jsBuilder.AppendLine($"{methodName.Replace(".","_")}: \"{invokableName}\", ");
+            }
+            
+            jsBuilder.AppendLine("};");
+
+            if (!string.IsNullOrWhiteSpace(config.Invokables.OutputToFile))
+            {
+                File.WriteAllText(config.Invokables.OutputToFile, jsBuilder.ToString());
+            }
+
+            if (config.Invokables.OutputToFiles.Count > 0)
+            {
+                foreach (var outputPath in config.Invokables.OutputToFiles)
+                {
+                    File.WriteAllText(outputPath, jsBuilder.ToString());
+                }
+            }
         }
     }
 }

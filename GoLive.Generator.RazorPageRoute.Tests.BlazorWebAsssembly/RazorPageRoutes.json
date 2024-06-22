@@ -3,5 +3,10 @@
   "ClassName": "PageRoutes",
   "OutputToFile":"PageRoute.cs",
   "OutputLastCreatedTime": true,
-  "OutputExtensionMethod" : true
+  "OutputExtensionMethod" : true,
+  "Invokables":{
+    "Enabled": true,
+    "JSClassName": "INVOKABLES",
+    "OutputToFile": "wwwroot\\jsinvokable.js"
+  }
 }

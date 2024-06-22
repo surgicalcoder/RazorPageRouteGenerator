@@ -8,6 +8,53 @@ namespace GoLive.Generator.RazorPageRoute.Generator
 {
     public static class Scanner
     {
+        public const string jsInvokableAttribute = "Microsoft.JSInterop.JSInvokableAttribute";
+            
+        public static IEnumerable<(string MethodName, string InvokableName)> ScanForInvokables(SemanticModel semantic)
+        {
+            var baseClass = semantic.Compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Components.ComponentBase");
+
+            if (baseClass == null)
+            {
+                yield break;
+            }
+            
+            var allNodes = semantic.SyntaxTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>();
+            
+            foreach (var node in allNodes)
+            {
+                if (semantic.GetDeclaredSymbol(node) is INamedTypeSymbol classSymbol && InheritsFrom(classSymbol, baseClass))
+                {
+                    
+                    foreach (var member in classSymbol.GetMembers().OfType<IMethodSymbol>())
+                    {
+                        // Check if the method has the attribute [JSInvokable(string)]
+                        if (member.GetAttributes().Any(attr =>
+                                attr.AttributeClass?.ToString() == jsInvokableAttribute &&
+                                attr.ConstructorArguments.Length > 0 &&
+                                attr.ConstructorArguments[0].Value is string))
+                        {
+                            // Extract method name
+                            string methodName = member.Name;
+
+                            // Extract parameter count
+                            int parameterCount = member.Parameters.Length;
+
+                            // Extract identifier in the attribute
+                            string identifier = member.GetAttributes().First(attr =>
+                                    attr.AttributeClass?.ToString() == jsInvokableAttribute &&
+                                    attr.ConstructorArguments.Length > 0 &&
+                                    attr.ConstructorArguments[0].Value is string)
+                                .ConstructorArguments[0].Value.ToString();
+
+                            yield return ($"{member.ContainingType.ToDisplayString()}.{member.Name}", identifier);
+                        }
+                    }
+                    
+                }
+            }
+        }
+        
         public static IEnumerable<PageRoute> ScanForPageRoutes(SemanticModel semantic)
         {
             var baseClass = semantic.Compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Components.ComponentBase");

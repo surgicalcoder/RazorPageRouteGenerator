@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace GoLive.Generator.RazorPageRoute.Generator;
+namespace GoLive.Generator.RazorPageRoute.Generator.Routing;
 
 internal struct StringSegmentAccumulator
 {

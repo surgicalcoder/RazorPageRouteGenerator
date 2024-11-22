@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using System.Globalization;
 
-namespace GoLive.Generator.RazorPageRoute.Generator;
+namespace GoLive.Generator.RazorPageRoute.Generator.Routing;
 
 /// <summary>
 /// Shared logic for parsing tokens from route values and querystring values.
@@ -10,9 +10,7 @@ namespace GoLive.Generator.RazorPageRoute.Generator;
 internal abstract class UrlValueConstraint
 {
     public delegate bool TryParseDelegate<T>(string str, out T result);
-
-
-
+    
     private static readonly ConcurrentDictionary<Type, UrlValueConstraint> _cachedInstances = new();
 
     public static bool TryGetByTargetType(Type targetType, out UrlValueConstraint result)

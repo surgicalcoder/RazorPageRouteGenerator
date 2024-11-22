@@ -6,9 +6,11 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using GoLive.Generator.RazorPageRoute.Generator.Routing;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Mono.Cecil;
 
 #endregion
 
@@ -21,56 +23,61 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
     {
         var defaultNamespace = context.AnalyzerConfigOptionsProvider.Select((provider, _) => !provider.GlobalOptions.TryGetValue("build_property.rootnamespace", out var ns) ? "DefaultNamespace" : ns);
         
-        var items = context.AnalyzerConfigOptionsProvider.Select((provider, _) =>
+        IncrementalValueProvider<List<PageRoute>> items = context.AnalyzerConfigOptionsProvider.Select((provider, _) =>
         {
-            if (!provider.GlobalOptions.TryGetValue("build_property.EmitCompilerGeneratedFiles", out var wibble))
+            if (!provider.GlobalOptions.TryGetValue("build_property.EmitCompilerGeneratedFiles", out var emitCompilerFiles))
             {
                 return null;
-                //return "ERROR: build_property.EmitCompilerGeneratedFiles not set";
             }
 
-            if (wibble.ToLowerInvariant() != "true")
+            if (emitCompilerFiles.ToLowerInvariant() != "true")
             {
+                context.RegisterSourceOutput(context.AnalyzerConfigOptionsProvider, (productionContext, source) => productionContext.AddSource("EmitCompilerGeneratedFiles_not_enabled.g.cs", string.Empty) );
                 return null;
-                //return $"ERROR: build_property.EmitCompilerGeneratedFiles is not true (value is {wibble.ToLowerInvariant()})";
             }
 
             if (!provider.GlobalOptions.TryGetValue("build_property.projectdir", out var projectDir))
             {
                 return null;
-                //return $"ERROR: build_property.projectdir is not set";
             }
 
             if (!provider.GlobalOptions.TryGetValue("build_property.compilergeneratedfilesoutputpath", out var generatedLocation))
             {
+                context.RegisterSourceOutput(context.AnalyzerConfigOptionsProvider, (productionContext, source) => productionContext.AddSource("Compiler_Generated_Files_Out_Path_missing.g.cs", string.Empty) );
+
                 return null;
-                //return $"ERROR: build_property.compilergeneratedfilesoutputpath is not set";
             }
 
-            return Path.Combine(projectDir, generatedLocation);
-        }).Select((s, _) =>
+            return projectDir;
+        }).Select((projectPath, _) =>
         {
-            if (s == null)
+            if (projectPath == null)
             {
                 return null;
             }
 
             List<PageRoute> retr = new();
-            var rootFolderPath = Path.Combine(s, "Microsoft.NET.Sdk.Razor.SourceGenerators\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator");
+            
+            var debugPath = getHighestFolderVersion(Path.Combine(projectPath, "bin", "Debug"));;
+            var objDebugPath = getHighestFolderVersion(Path.Combine(projectPath, "obj", "Debug"));
+            var refIntPath = Path.Combine(objDebugPath, "refInt");
+            
+            var dllFile = Directory.GetFiles(refIntPath, "*.dll").FirstOrDefault();
 
-            foreach (var file in Directory.GetFiles(rootFolderPath, "*.g.cs"))
+            if (dllFile == null)
             {
-                var parsed = CSharpSyntaxTree.ParseText(File.ReadAllText(file));
-                var root = parsed.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().FirstOrDefault();
-                var pageRoutes = Scanner.ScanForPageRoutesIncremental(root);
-
-                if (pageRoutes != null && pageRoutes.Any())
-                {
-                    retr.AddRange(pageRoutes);
-                }
+                throw new FileNotFoundException("No DLL file found in refInt directory.");
             }
+            
+            //var defaultNetPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "dotnet", "shared", "Microsoft.AspNetCore.App", "9.0.0");
+            var assemblyResolver = new DefaultAssemblyResolver();
+            assemblyResolver.AddSearchDirectory(refIntPath);
+            //assemblyResolver.AddSearchDirectory(defaultNetPath);
+            assemblyResolver.AddSearchDirectory(debugPath);
+            
+            var assembly = AssemblyDefinition.ReadAssembly(dllFile, new ReaderParameters { AssemblyResolver = assemblyResolver });
 
-            return retr.DistinctBy(e=>e.Route).ToList();
+            return Scanner.ScanForPageRoutesIncremental(assembly).DistinctBy(e => e.Route).ToList();
         });
 
         var configFiles = context.AdditionalTextsProvider.Where(IsConfigurationFile);
@@ -360,10 +367,22 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
 
         return config;
     }
-
-
-    private static bool IsConfigurationFile(AdditionalText text)
+    
+    string? getHighestFolderVersion(string inputFolder, string searchPattern = "net*")
     {
-        return text.Path.EndsWith("RazorPageRoutes.json");
+        var versionFolders = Directory.GetDirectories(inputFolder, searchPattern)
+            .OrderByDescending(v => Version.Parse(Path.GetFileName(v)[3..]))
+            .ToList();
+
+        if (versionFolders.Count == 0)
+        {
+            throw new DirectoryNotFoundException("No version folders found in debug directory.");
+        }
+
+        var highestVersionFolder = versionFolders.First();
+
+        return highestVersionFolder;
     }
+
+    private static bool IsConfigurationFile(AdditionalText text) => text.Path.EndsWith("RazorPageRoutes.json");
 }

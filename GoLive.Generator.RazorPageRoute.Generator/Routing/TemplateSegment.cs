@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GoLive.Generator.RazorPageRoute.Generator;
+namespace GoLive.Generator.RazorPageRoute.Generator.Routing;
 
 internal class TemplateSegment
 {

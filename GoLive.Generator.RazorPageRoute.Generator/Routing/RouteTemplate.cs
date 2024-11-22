@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace GoLive.Generator.RazorPageRoute.Generator;
+namespace GoLive.Generator.RazorPageRoute.Generator.Routing;
 
 [DebuggerDisplay("{TemplateText}")]
 internal class RouteTemplate

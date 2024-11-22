@@ -1,53 +1,70 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Mono.Cecil;
 
 namespace GoLive.Generator.RazorPageRoute.Generator;
 
 public static class Scanner
 {
-    public static IEnumerable<PageRoute> ScanForPageRoutesIncremental(ClassDeclarationSyntax input)
-    {
-        var res = ToRoute(input);
+    private static readonly string componentBaseTypeName = "Microsoft.AspNetCore.Components.ComponentBase";
 
-        foreach (var pageRoute in res)
-        {
-            yield return pageRoute;
-        }
-    }
-        
-    private static IEnumerable<PageRoute> ToRoute(ClassDeclarationSyntax input)
+    public static IEnumerable<PageRoute> ScanForPageRoutesIncremental(AssemblyDefinition input)
     {
-        var classAttributes = GetAttributes(input.AttributeLists);
-            
-        var queryStringParams = input.Members.OfType<PropertyDeclarationSyntax>();
+        var types = input.MainModule.Types
+            .Where(t => t.BaseType != null && t is { IsClass: true, IsAbstract: false } && IsSubclassOf(t, componentBaseTypeName))
+            .ToList();
 
-        var querystringParameters = queryStringParams.Select(e => 
-                (e, GetAttributes(e.AttributeLists))).Where(f => f.Item2.Any( e=>e.Name.ToLowerInvariant() is "supplyparameterfromqueryattribute" or "microsoft.aspnetcore.components.supplyparameterfromqueryattribute" or "supplyparameterfromquery" ))
-            .Select(f => new PageRouteQuerystringParameter(f.e.Identifier.ToFullString().Trim(), f.e.Type.ToFullString().Trim())).ToList(); 
-            
-        foreach (var attributeData in classAttributes.Where(r=>r.Name == "global::Microsoft.AspNetCore.Components.RouteAttribute"))
+        foreach (var type in types)
         {
-            var route = attributeData?.Values.FirstOrDefault()?.ToString() ?? string.Empty;
+            var res = ToRoute(type);
 
-            yield return new PageRoute(input.Identifier.Text, route, querystringParameters);
-        }
-    }
-        
-        
-    private static IEnumerable<AttributeContainer> GetAttributes(SyntaxList<AttributeListSyntax> input)
-    {
-        foreach (var attributeSyntax in input)
-        {
-            foreach (var attributeSyntaxAttribute in attributeSyntax.Attributes)
+            foreach (var pageRoute in res)
             {
-                AttributeContainer retr = new();
-                retr.Name = attributeSyntaxAttribute.Name.NormalizeWhitespace().ToFullString().Trim();
-                retr.Values = attributeSyntaxAttribute.ArgumentList?.Arguments.Select(r => (r.Expression as LiteralExpressionSyntax)?.Token.Value).ToList();
-                yield return retr;
+                yield return pageRoute;
             }
         }
+    }
+
+    private static IEnumerable<PageRoute> ToRoute(TypeDefinition input)
+    {
+        var classAttributes = GetAttributes(input.CustomAttributes);
+
+        var routes = classAttributes
+            .Where(attr => attr.AttributeType.FullName == "Microsoft.AspNetCore.Components.RouteAttribute")
+            .Select(attr => attr.ConstructorArguments.FirstOrDefault().Value?.ToString())
+            .Where(route => !string.IsNullOrEmpty(route))
+            .ToList();
+
+        var queryStringParams = input.Properties;
+
+        var querystringParameters = queryStringParams
+            .Where(p => p.CustomAttributes.Any(attr => attr.AttributeType.FullName == "Microsoft.AspNetCore.Components.SupplyParameterFromQueryAttribute"))
+            .Select(p => new PageRouteQuerystringParameter(p.Name, p.PropertyType.FullName))
+            .ToList();
+
+        foreach (var route in routes)
+        {
+            yield return new PageRoute(input.Name, route, querystringParameters);
+        }
+    }
+
+    private static bool IsSubclassOf(TypeDefinition type, string baseTypeName)
+    {
+        while (type != null && type.FullName != "System.Object")
+        {
+            if (type.FullName == baseTypeName)
+            {
+                return true;
+            }
+
+            type = type.BaseType?.Resolve();
+        }
+
+        return false;
+    }
+
+    private static IEnumerable<CustomAttribute> GetAttributes(IEnumerable<CustomAttribute> customAttributes)
+    {
+        return customAttributes ?? [];
     }
 }

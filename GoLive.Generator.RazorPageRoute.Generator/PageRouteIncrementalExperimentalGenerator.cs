@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using GoLive.Generator.RazorPageRoute.Generator.Routing;
 using Microsoft.CodeAnalysis;
@@ -25,7 +26,7 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
         
         IncrementalValueProvider<List<PageRoute>> items = context.AnalyzerConfigOptionsProvider.Select((provider, _) =>
         {
-            if (!provider.GlobalOptions.TryGetValue("build_property.EmitCompilerGeneratedFiles", out var emitCompilerFiles))
+            /*if (!provider.GlobalOptions.TryGetValue("build_property.EmitCompilerGeneratedFiles", out var emitCompilerFiles))
             {
                 return null;
             }
@@ -34,19 +35,20 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
             {
                 context.RegisterSourceOutput(context.AnalyzerConfigOptionsProvider, (productionContext, source) => productionContext.AddSource("EmitCompilerGeneratedFiles_not_enabled.g.cs", string.Empty) );
                 return null;
-            }
+            }*/
 
             if (!provider.GlobalOptions.TryGetValue("build_property.projectdir", out var projectDir))
             {
                 return null;
             }
 
+            /*
             if (!provider.GlobalOptions.TryGetValue("build_property.compilergeneratedfilesoutputpath", out var generatedLocation))
             {
                 context.RegisterSourceOutput(context.AnalyzerConfigOptionsProvider, (productionContext, source) => productionContext.AddSource("Compiler_Generated_Files_Out_Path_missing.g.cs", string.Empty) );
 
                 return null;
-            }
+            }*/
 
             return projectDir;
         }).Select((projectPath, _) =>
@@ -58,31 +60,16 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
 
             List<PageRoute> retr = new();
             
-            var debugPath = getHighestFolderVersion(Path.Combine(projectPath, "bin", "Debug"));;
-            var objDebugPath = getHighestFolderVersion(Path.Combine(projectPath, "obj", "Debug"));
-            var refIntPath = Path.Combine(objDebugPath, "refInt");
-            
-            var dllFile = Directory.GetFiles(refIntPath, "*.dll").FirstOrDefault();
+            var dllFile = Scanner.GetDllPathFromProject(projectPath, out var assemblyResolver);
 
-            if (dllFile == null)
-            {
-                throw new FileNotFoundException("No DLL file found in refInt directory.");
-            }
-            
-            //var defaultNetPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "dotnet", "shared", "Microsoft.AspNetCore.App", "9.0.0");
-            var assemblyResolver = new DefaultAssemblyResolver();
-            assemblyResolver.AddSearchDirectory(refIntPath);
-            //assemblyResolver.AddSearchDirectory(defaultNetPath);
-            assemblyResolver.AddSearchDirectory(debugPath);
-            
-            var assembly = AssemblyDefinition.ReadAssembly(dllFile, new ReaderParameters { AssemblyResolver = assemblyResolver });
+            using var assembly = AssemblyDefinition.ReadAssembly(dllFile, new ReaderParameters { AssemblyResolver = assemblyResolver });
 
-            return Scanner.ScanForPageRoutesIncremental(assembly).DistinctBy(e => e.Route).ToList();
+            return Scanner.ScanForPageRoutesIncremental(assembly).CustomDistinctBy(e => e.Route).ToList();
         });
 
         var configFiles = context.AdditionalTextsProvider.Where(IsConfigurationFile);
 
-        context.RegisterSourceOutput(items.Combine(configFiles.Collect()).Combine(defaultNamespace), (productionContext, routes) => Output(productionContext, routes));
+        context.RegisterSourceOutput(items.Combine(configFiles.Collect()).Combine(defaultNamespace), Output);
     }
 
     private void Output(SourceProductionContext productionContext, ((List<PageRoute> Left, ImmutableArray<AdditionalText> Right) Left, string defaultNamespace) input)
@@ -197,6 +184,11 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
                     File.WriteAllText(config.OutputToFile, sourceOutput);
                 }
             }
+        }
+        
+        if (config.Invokables is { Enabled: true })
+        {
+            GenerateJSInvokable(config, context);
         }
     }
 
@@ -364,25 +356,58 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
                 return fullPath;
             }).ToList();
         }
+        
+        if (config.Invokables != null && (!string.IsNullOrWhiteSpace(config.Invokables.OutputToFile) || config.Invokables.OutputToFiles.Count > 0))
+        {
+            if (!string.IsNullOrWhiteSpace(config.Invokables.OutputToFile))
+            {
+                var fullPath = Path.Combine(configFileDirectory, config.Invokables.OutputToFile);
+                config.Invokables.OutputToFile = Path.GetFullPath(fullPath);
+            }
+
+            foreach (var outputFile in config.Invokables.OutputToFiles)
+            {
+                var fullPath = Path.Combine(configFileDirectory, outputFile);
+                var index = config.Invokables.OutputToFiles.IndexOf(outputFile);
+                config.Invokables.OutputToFiles[index] = Path.GetFullPath(fullPath);
+            }
+        }
 
         return config;
     }
     
-    string? getHighestFolderVersion(string inputFolder, string searchPattern = "net*")
+    private void GenerateJSInvokable(Settings config, GeneratorExecutionContext context)
     {
-        var versionFolders = Directory.GetDirectories(inputFolder, searchPattern)
-            .OrderByDescending(v => Version.Parse(Path.GetFileName(v)[3..]))
-            .ToList();
+        var invokables = context.Compilation.SyntaxTrees.Select(t => context.Compilation.GetSemanticModel(t)).Select(Scanner.ScanForInvokables).SelectMany(c => c).ToArray();
 
-        if (versionFolders.Count == 0)
+        if (invokables.Length == 0)
         {
-            throw new DirectoryNotFoundException("No version folders found in debug directory.");
+            return;
         }
 
-        var highestVersionFolder = versionFolders.First();
+        var jsBuilder = new StringBuilder();
+        jsBuilder.AppendLine($"const {config.Invokables.JSClassName} = {{");
+    
+        foreach (var (methodName, invokableName) in invokables)
+        {
+            jsBuilder.AppendLine($"{methodName.Replace(".","_")}: \"{invokableName}\", ");
+        }
+            
+        jsBuilder.AppendLine("};");
 
-        return highestVersionFolder;
+        if (!string.IsNullOrWhiteSpace(config.Invokables.OutputToFile))
+        {
+            File.WriteAllText(config.Invokables.OutputToFile, jsBuilder.ToString());
+        }
+
+        if (config.Invokables.OutputToFiles.Count > 0)
+        {
+            foreach (var outputPath in config.Invokables.OutputToFiles)
+            {
+                File.WriteAllText(outputPath, jsBuilder.ToString());
+            }
+        }
     }
-
+    
     private static bool IsConfigurationFile(AdditionalText text) => text.Path.EndsWith("RazorPageRoutes.json");
 }

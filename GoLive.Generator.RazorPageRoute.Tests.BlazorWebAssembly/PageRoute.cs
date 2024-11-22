@@ -1,4 +1,4 @@
-// This file was generated on Mon, 15 Apr 2024 22:33:54 GMT
+// This file was generated on Fri, 22 Nov 2024 23:36:22 GMT
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -6,11 +6,11 @@ using System.Net.Http.Json;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Components;
 
-namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly
+namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly
 {
     public static partial class PageRoutes
     {
-        public static string Counter(string QSInput = default)
+        public static string Counter(System.String QSInput = default)
         {
             string url = "/counter";
             Dictionary<string, string> queryString = new();
@@ -23,7 +23,7 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly
             return url;
         }
 
-        public static void Counter(this NavigationManager manager, string QSInput = default, bool forceLoad = false, bool replace = false)
+        public static void Counter(this NavigationManager manager, System.String QSInput = default, bool forceLoad = false, bool replace = false)
         {
             string url = "/counter";
             Dictionary<string, string> queryString = new();
@@ -36,7 +36,7 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly
             manager.NavigateTo(url, forceLoad, replace);
         }
 
-        public static string Counter_View(string id, string QSInput = default)
+        public static string Counter_View(string id, System.String QSInput = default)
         {
             string url = $"/counter/view/{id.ToString()}";
             Dictionary<string, string> queryString = new();
@@ -49,7 +49,7 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly
             return url;
         }
 
-        public static void Counter_View(this NavigationManager manager, string id, string QSInput = default, bool forceLoad = false, bool replace = false)
+        public static void Counter_View(this NavigationManager manager, string id, System.String QSInput = default, bool forceLoad = false, bool replace = false)
         {
             string url = $"/counter/view/{id.ToString()}";
             Dictionary<string, string> queryString = new();
@@ -62,7 +62,7 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly
             manager.NavigateTo(url, forceLoad, replace);
         }
 
-        public static string Counter_Viewbyid(System.Int32 id, string QSInput = default)
+        public static string Counter_Viewbyid(System.Int32 id, System.String QSInput = default)
         {
             string url = $"/counter/viewbyid/{id.ToString()}";
             Dictionary<string, string> queryString = new();
@@ -75,7 +75,7 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly
             return url;
         }
 
-        public static void Counter_Viewbyid(this NavigationManager manager, System.Int32 id, string QSInput = default, bool forceLoad = false, bool replace = false)
+        public static void Counter_Viewbyid(this NavigationManager manager, System.Int32 id, System.String QSInput = default, bool forceLoad = false, bool replace = false)
         {
             string url = $"/counter/viewbyid/{id.ToString()}";
             Dictionary<string, string> queryString = new();

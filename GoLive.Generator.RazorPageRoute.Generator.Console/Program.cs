@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using System.Reflection;
 using GoLive.Generator.RazorPageRoute.Generator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -7,34 +8,79 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 if (args.Length < 3)
 {
-    Console.WriteLine("Parameters required to run - <Settings File> <Generated Location> <Namespace>");
+    Console.WriteLine("Parameters required to run - <Settings File> <Obj Path> <Namespace>");
     return;
 }
 
 var settingsFile = args[0];
-var generatedLocation = args[1];
+var objPath = args[1];
 var @namespace = args[2];
 
 var settings = PageRouteIncrementalExperimentalGenerator.LoadConfigFromFile(settingsFile, @namespace);
-var routes = GetPageRoutes(generatedLocation);
-PageRouteIncrementalExperimentalGenerator.GenerateOutput(default, settings, routes);
+var routes = GetPageRoutes(objPath);
 
-List<PageRoute> GetPageRoutes(string GeneratedPath)
+List<PageRoute> GetPageRoutes(string objPath)
 {
-    List<PageRoute> retr = new();
-    var rootFolderPath = Path.Combine(GeneratedPath, "Microsoft.NET.Sdk.Razor.SourceGenerators\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator");
+    var debugPath = Path.Combine(objPath, "debug");
+    var versionFolders = Directory.GetDirectories(debugPath, "net*")
+                                  .Select(Path.GetFileName)
+                                  .OrderByDescending(v => Version.Parse(v[3..]))
+                                  .ToList();
 
-    foreach (var file in Directory.GetFiles(rootFolderPath, "*.g.cs"))
+    if (versionFolders.Count == 0)
     {
-        var parsed = CSharpSyntaxTree.ParseText(File.ReadAllText(file));
-        var root = parsed.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().FirstOrDefault();
-        var pageRoutes = Scanner.ScanForPageRoutesIncremental(root);
-
-        if (pageRoutes != null && pageRoutes.Any())
-        {
-            retr.AddRange(pageRoutes);
-        }
+        throw new DirectoryNotFoundException("No version folders found in debug directory.");
     }
 
-    return retr;
+    var highestVersionFolder = versionFolders.First();
+    var refIntPath = Path.Combine(debugPath, highestVersionFolder, "refInt");
+    var dllFile = Directory.GetFiles(refIntPath, "*.dll").FirstOrDefault();
+
+    if (dllFile == null)
+    {
+        throw new FileNotFoundException("No DLL file found in refInt directory.");
+    }
+
+
+    var assembly = Assembly.LoadFile(dllFile);
+    var componentBaseTypeName = "Microsoft.AspNetCore.Components.ComponentBase";
+    var types = assembly.GetTypes()
+        .Where(t => t.BaseType != null && t is { IsClass: true, IsAbstract: false } && IsSubclassOf(t, componentBaseTypeName))
+        .ToList();
+    var routesList = new List<string>();
+    
+    foreach (var type in types)
+    {
+        var routeAttributes = type.GetCustomAttributes()
+            .Where(attr => attr.GetType().FullName == "Microsoft.AspNetCore.Components.RouteAttribute")
+            .Select(attr => attr.GetType().GetProperty("Template")?.GetValue(attr)?.ToString())
+            .Where(route => !string.IsNullOrEmpty(route))
+            .ToList();
+    
+        routesList.AddRange(routeAttributes);
+    }
+    
+    foreach (var se in routesList)
+    {
+        Console.WriteLine(se);
+    }
+    
+    
+    bool IsSubclassOf(Type type, string baseTypeName)
+    {
+        while (type != null && type.FullName != "System.Object")
+        {
+            if (type.FullName == baseTypeName)
+            {
+                return true;
+            }
+            type = type.BaseType;
+        }
+        return false;
+    }
+
+    throw new NotImplementedException();
 }
+
+PageRouteIncrementalExperimentalGenerator.GenerateOutput(default, settings, routes);
+

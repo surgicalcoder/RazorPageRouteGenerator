@@ -3,11 +3,11 @@
   "profiles": {
     "GoLive.Generator.RazorPageRoute.Generator": {
       "commandName": "DebugRoslynComponent",
-      "targetProject": "../GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly/GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly.csproj"
+      "targetProject": "../GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly/GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly.csproj"
     },
     "Web3": {
       "commandName": "DebugRoslynComponent",
-      "targetProject": "../GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly3/GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly3.csproj"
+      "targetProject": "../GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly3/GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly3.csproj"
     },
     "Web4": {
       "commandName": "DebugRoslynComponent",

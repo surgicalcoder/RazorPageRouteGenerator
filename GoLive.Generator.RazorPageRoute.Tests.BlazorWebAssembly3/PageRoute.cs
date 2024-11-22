@@ -6,7 +6,7 @@ using System.Net.Http.Json;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Components;
 
-namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly3
+namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly3
 {
     public static partial class PageRoutes
     {

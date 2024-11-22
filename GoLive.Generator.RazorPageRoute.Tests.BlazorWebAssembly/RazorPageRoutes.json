@@ -1,5 +1,5 @@
-{
-  "Namespace": "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly3",
+﻿{
+  "Namespace": "GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly",
   "ClassName": "PageRoutes",
   "OutputToFile":"PageRoute.cs",
   "OutputLastCreatedTime": true,

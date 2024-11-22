@@ -5,11 +5,11 @@ VisualStudioVersion = 17.0.31919.166
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoLive.Generator.RazorPageRoute.Generator", "GoLive.Generator.RazorPageRoute.Generator\GoLive.Generator.RazorPageRoute.Generator.csproj", "{789354C1-9B76-4276-B6F7-83D1B8154E1D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly", "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly\GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly.csproj", "{8A5871C3-72B3-47B1-92BB-0EF37EBEE359}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly", "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly\GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly.csproj", "{8A5871C3-72B3-47B1-92BB-0EF37EBEE359}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly2", "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly2\GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly2.csproj", "{67B54C4D-6B39-408B-AD30-90669684DD28}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly2", "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly2\GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly2.csproj", "{67B54C4D-6B39-408B-AD30-90669684DD28}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly3", "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly3\GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly3.csproj", "{8BA04BFE-98CE-40DC-A948-841BB89A920F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly3", "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly3\GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly3.csproj", "{8BA04BFE-98CE-40DC-A948-841BB89A920F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoLive.Generator.RazorPageRoute.Generator.Console", "GoLive.Generator.RazorPageRoute.Generator.Console\GoLive.Generator.RazorPageRoute.Generator.Console.csproj", "{5B66E49E-E41F-4C2D-812B-E993294FBA45}"
 EndProject

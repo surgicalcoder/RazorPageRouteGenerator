@@ -8,7 +8,7 @@
     }
   },
   "profiles": {
-    "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly": {
+    "GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,

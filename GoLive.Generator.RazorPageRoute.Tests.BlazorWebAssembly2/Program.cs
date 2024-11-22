@@ -1,4 +1,4 @@
-using GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly2;
+using GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly2;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 

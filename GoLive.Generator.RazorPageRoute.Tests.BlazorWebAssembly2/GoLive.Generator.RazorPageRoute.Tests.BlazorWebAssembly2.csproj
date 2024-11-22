@@ -8,6 +8,7 @@
     <UseRazorSourceGenerator>false</UseRazorSourceGenerator>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
+    <RootNamespace>GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly2</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

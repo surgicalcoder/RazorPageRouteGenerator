@@ -1,6 +1,6 @@
+using GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using GoLive.Generator.RazorPageRoute.Tests.BlazorWebAsssembly3;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");

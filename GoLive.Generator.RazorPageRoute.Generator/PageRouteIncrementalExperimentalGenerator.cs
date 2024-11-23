@@ -37,43 +37,33 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
         {
             if (projectPath == null)
             {
-                return null;
+                return default;
             }
             
             var dllFile = Scanner.GetDllPathFromProject(projectPath, out var assemblyResolver);
 
             using var assembly = AssemblyDefinition.ReadAssembly(dllFile, new ReaderParameters { AssemblyResolver = assemblyResolver });
 
-            return Scanner.ScanForPageRoutesIncremental(assembly).CustomDistinctBy(e => e.Route).ToList();
-        });
-
-        var invokableItems = projectDirProvider.Select((projectPath, _) =>
-        {
-            if (projectPath == null)
-            {
-                return null;
-            }
-
-            var dllFile = Scanner.GetDllPathFromProject(projectPath, out var assemblyResolver);
-
-            using var assembly = AssemblyDefinition.ReadAssembly(dllFile, new ReaderParameters { AssemblyResolver = assemblyResolver });
-
-            return Scanner.ScanForInvokables(assembly).ToList();
+            var routes = Scanner.ScanForPageRoutesIncremental(assembly).CustomDistinctBy(e => e.Route).ToList();
+            var incrementals = Scanner.ScanForInvokables(assembly).ToList();
+            
+            return (routes, incrementals);
         });
 
         var configFiles = context.AdditionalTextsProvider.Where(IsConfigurationFile);
 
         context.RegisterSourceOutput(pageRouteItems.Combine(configFiles.Collect()).Combine(defaultNamespace), Output);
-        context.RegisterSourceOutput(invokableItems.Combine(configFiles.Collect()).Combine(defaultNamespace), OutputInvokables);
     }
 
-    private void OutputInvokables(SourceProductionContext productionContext, ((List<(string MethodName, string InvokableName)> Left, ImmutableArray<AdditionalText> Right) Left, string defaultNamespace) arg2)
+    private void Output(SourceProductionContext productionContext, (((List<PageRoute> routes, List<(string MethodName, string InvokableName)> incrementals) Left, ImmutableArray<AdditionalText> Right) Left, string defaultNamespace) arg2)
     {
         var config = LoadConfig(arg2.Left.Right, arg2.defaultNamespace);
         
+        GenerateOutput(productionContext, config, arg2.Left.Left.routes);
+        
         if (config.Invokables is { Enabled: true })
         {
-            GenerateJSInvokable(config, arg2.Left.Left);
+            GenerateJSInvokable(config, arg2.Left.Left.incrementals);
         }
     }
 

@@ -67,13 +67,6 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
         }
     }
 
-    private void Output(SourceProductionContext productionContext, ((List<PageRoute> Left, ImmutableArray<AdditionalText> Right) Left, string defaultNamespace) input)
-    {
-        var config = LoadConfig(input.Left.Right, input.defaultNamespace);
-
-        GenerateOutput(productionContext, config, input.Left.Left);
-    }
-
     public static void GenerateOutput(SourceProductionContext productionContext, Settings config, List<PageRoute> pageRoutes)
     {
         var source = new SourceStringBuilder();

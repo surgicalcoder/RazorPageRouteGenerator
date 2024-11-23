@@ -1,0 +1,8 @@
+﻿@page "/AuthPage"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
+@inject NavigationManager navi
+
+<PageTitle>Index</PageTitle>
+
+<h1>Hello, world!</h1>

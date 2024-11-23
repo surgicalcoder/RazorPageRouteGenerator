@@ -1,12 +1,17 @@
 ﻿{
-  "Namespace": "GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly",
-  "ClassName": "PageRoutes",
-  "OutputToFile":"PageRoute.cs",
-  "OutputLastCreatedTime": true,
-  "OutputExtensionMethod" : true,
-  "Invokables":{
-    "Enabled": true,
-    "JSClassName": "INVOKABLES",
-    "OutputToFile": "wwwroot\\jsinvokable.js"
-  }
+    "Namespace": "GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly",
+    "ClassName": "PageRoutes",
+    "OutputToFile": "PageRoute.cs",
+    "OutputLastCreatedTime": true,
+    "OutputExtensionMethod": true,
+    "Invokables": {
+        "Enabled": true,
+        "JSClassName": "INVOKABLES",
+        "OutputToFile": "wwwroot\\jsinvokable.js"
+    },
+    "Auth": [
+        {
+            "Attribute": "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly.CustomAuth"
+        }
+    ]
 }

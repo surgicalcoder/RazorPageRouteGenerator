@@ -60,34 +60,28 @@ public static class Scanner
             throw new FileNotFoundException("No DLL file found in refInt directory.");
         }
 
-        //var defaultNetPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "dotnet", "shared", "Microsoft.AspNetCore.App", "9.0.0");
         assemblyResolver = new DefaultAssemblyResolver();
         assemblyResolver.AddSearchDirectory(refIntPath);
-        //assemblyResolver.AddSearchDirectory(defaultNetPath);
+        //assemblyResolver.AddSearchDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "dotnet", "shared", "Microsoft.AspNetCore.App", "9.0.0"));
         assemblyResolver.AddSearchDirectory(debugPath);
 
         return dllFile;
     }
 
-    public static IEnumerable<PageRoute> ScanForPageRoutesIncremental(AssemblyDefinition input)
+    public static IEnumerable<PageRoute> ScanForPageRoutesIncremental(AssemblyDefinition input, Settings settings)
     {
         var types = input.MainModule.Types
             .Where(t => t.BaseType != null && t is { IsClass: true, IsAbstract: false } &&
                         IsSubclassOf(t, componentBaseTypeName))
             .ToList();
 
-        foreach (var type in types)
+        foreach (var pageRoute in types.Select(definition => ToRoute(definition, settings)).SelectMany(res => res))
         {
-            var res = ToRoute(type);
-
-            foreach (var pageRoute in res)
-            {
-                yield return pageRoute;
-            }
+            yield return pageRoute;
         }
     }
 
-    private static IEnumerable<PageRoute> ToRoute(TypeDefinition input)
+    private static IEnumerable<PageRoute> ToRoute(TypeDefinition input, Settings settings)
     {
         var classAttributes = GetAttributes(input.CustomAttributes);
 
@@ -105,10 +99,89 @@ public static class Scanner
             .Select(p => new PageRouteQuerystringParameter(p.Name, p.PropertyType.FullName))
             .ToList();
 
+        var pageRouteAuth = getPageRouteAuth(input, settings);
+
         foreach (var route in routes)
         {
-            yield return new PageRoute(input.Name, route, querystringParameters);
+            yield return new PageRoute(input.Name, route, querystringParameters, pageRouteAuth);
         }
+    }
+
+    private static PageRouteAuth getPageRouteAuth(TypeDefinition input, Settings settings)
+    {
+        PageRouteAuth retr = new();
+
+        // Check for built-in Authorize attributes
+        var authorizeAttributes = input.CustomAttributes
+            .Where(attr => attr.AttributeType.FullName == "Microsoft.AspNetCore.Authorization.AuthorizeAttribute")
+            .ToList();
+        
+        foreach (var attr in authorizeAttributes)
+        {
+            retr.RequiresAuthentication = true;
+
+            foreach (var arg in attr.ConstructorArguments)
+            {
+                if (arg.Type.FullName == "System.String")
+                {
+                    retr.Roles = arg.Value.ToString().Split(',').Select(role => role.Trim()).ToList();
+                }
+            }
+
+            foreach (var namedArg in attr.Properties)
+            {
+                if (namedArg.Name == "Roles")
+                {
+                    retr.Roles = namedArg.Argument.Value.ToString().Split(',').Select(role => role.Trim()).ToList();
+                }
+                else if (namedArg.Name == "Policy")
+                {
+                    retr.Policies = namedArg.Argument.Value.ToString().Split(',').Select(policy => policy.Trim()).ToList();
+                }
+            }
+        }
+
+        // Check for custom attributes from settings.Auth
+        foreach (var customAuth in settings.Auth)
+        {
+            var customAttributes = input.CustomAttributes
+                .Where(attr => attr.AttributeType.FullName == customAuth.Attribute)
+                .ToList();
+
+            foreach (var attr in customAttributes)
+            {
+                retr.RequiresAuthentication = true;
+
+                var ctorArgs = new Dictionary<string, string>();
+                var namedArgs = new Dictionary<string, string>();
+
+                foreach (var arg in attr.ConstructorArguments)
+                {
+                    var constructor = attr.AttributeType.Resolve().Methods
+                        .First(m => m.IsConstructor && m.Parameters.Count == attr.ConstructorArguments.Count);
+
+                    var parameterName = constructor.Parameters[attr.ConstructorArguments.IndexOf(arg)].Name;
+                    var parameterValue = arg.Value is CustomAttributeArgument[] array
+                        ? string.Join(",", array.Select(a => a.Value?.ToString()))
+                        : arg.Value?.ToString();
+
+                    if (parameterValue != null)
+                    {
+                        ctorArgs[parameterName] = parameterValue;
+                    }
+                }
+
+
+                foreach (var namedArg in attr.Properties)
+                {
+                    namedArgs[namedArg.Name] = namedArg.Argument.Value.ToString();
+                }
+                Console.WriteLine("");
+
+            }
+        }
+
+        return retr;
     }
 
     private static bool IsSubclassOf(TypeDefinition type, string baseTypeName)

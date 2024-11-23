@@ -26,27 +26,39 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
 
         var projectDirProvider = context.AnalyzerConfigOptionsProvider.Select((provider, _) =>
         {
+            var globalOptions = new Dictionary<string, string>();
+            foreach (var option in provider.GlobalOptions.Keys)
+            {
+                if (provider.GlobalOptions.TryGetValue(option, out var value))
+                {
+                    globalOptions[option] = value;
+                }
+            }
+
+            // You can now use the globalOptions dictionary for debugging purposes
+            // For example, you can write it to a file or log it
+
             if (!provider.GlobalOptions.TryGetValue("build_property.projectdir", out var projectDir))
             {
                 return null;
             }
             return projectDir;
         });
-        
+
         var pageRouteItems = projectDirProvider.Select((projectPath, _) =>
         {
             if (projectPath == null)
             {
                 return default;
             }
-            
+
             var dllFile = Scanner.GetDllPathFromProject(projectPath, out var assemblyResolver);
 
             using var assembly = AssemblyDefinition.ReadAssembly(dllFile, new ReaderParameters { AssemblyResolver = assemblyResolver });
 
             var routes = Scanner.ScanForPageRoutesIncremental(assembly).CustomDistinctBy(e => e.Route).ToList();
             var incrementals = Scanner.ScanForInvokables(assembly).ToList();
-            
+
             return (routes, incrementals);
         });
 
@@ -123,7 +135,6 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
             if (pageRoute.QueryString is { Count: > 0 })
             {
                 routeSegments.AddRange(pageRoute.QueryString.Select(prqp => $"{prqp.Type} {prqp.Name} = default"));
-                //routeSegments.AddRange(pageRoute.QueryString.Select(prqp => $"{prqp.Type}{(prqp.Type.IsReferenceType ? "?" : "")} {prqp.Name} = default"));
             }
 
             var parameterString = string.Join(", ", routeSegments);
@@ -153,22 +164,12 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
                 {
                     foreach (var configOutputToFile in config.OutputToFiles)
                     {
-                        /*if (File.Exists(configOutputToFile))
-                        {
-                            File.Delete(configOutputToFile);
-                        }*/
-
                         File.WriteAllText(configOutputToFile, sourceOutput);
                     }
                 }
 
                 if (!string.IsNullOrWhiteSpace(config.OutputToFile))
                 {
-                    /*if (File.Exists(config.OutputToFile))
-                    {
-                        File.Delete(config.OutputToFile);
-                    }*/
-
                     File.WriteAllText(config.OutputToFile, sourceOutput);
                 }
             }

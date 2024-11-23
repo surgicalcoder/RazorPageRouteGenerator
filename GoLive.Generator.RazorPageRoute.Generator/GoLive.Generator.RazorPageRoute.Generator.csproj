@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-	
+	<Import Project="GoLive.Generator.RazorPageRoute.Generator.props" />
 	<PropertyGroup>
 		<TargetFramework>netstandard2.0</TargetFramework>
         <LangVersion>13</LangVersion>

@@ -176,8 +176,8 @@ public static class Scanner
                 {
                     namedArgs[namedArg.Name] = namedArg.Argument.Value.ToString();
                 }
-                Console.WriteLine("");
 
+                retr.CustomAuth.Add(new PageRouteAuthCustomAuth(attr.AttributeType.Name, ctorArgs, namedArgs));
             }
         }
 

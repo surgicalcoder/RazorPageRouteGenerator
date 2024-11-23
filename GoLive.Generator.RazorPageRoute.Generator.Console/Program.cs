@@ -27,7 +27,17 @@ List<PageRoute> GetPageRoutes(string projectPath)
 
     using var assembly = AssemblyDefinition.ReadAssembly(dllFile, new ReaderParameters { AssemblyResolver = assemblyResolver });
 
-    return Scanner.ScanForPageRoutesIncremental(assembly).DistinctBy(route => route.Route).ToList();
+    return Scanner.ScanForPageRoutesIncremental(assembly, settings).DistinctBy(route => route.Route).ToList();
+}
+
+IEnumerable<(string MethodName, string InvokableName)> GetInvokeables(string projectPath)
+{
+    var dllFile = Scanner.GetDllPathFromProject(projectPath, out var assemblyResolver);
+
+    using var assembly = AssemblyDefinition.ReadAssembly(dllFile, new ReaderParameters { AssemblyResolver = assemblyResolver });
+
+    return Scanner.ScanForInvokables(assembly);
 }
 
 PageRouteIncrementalExperimentalGenerator.GenerateOutput(default, settings, routes);
+PageRouteIncrementalExperimentalGenerator.GenerateJSInvokable(settings, GetInvokeables(projectPath).ToList());

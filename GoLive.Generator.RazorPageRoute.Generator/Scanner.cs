@@ -53,7 +53,18 @@ public static class Scanner
         var objDebugPath = getHighestFolderVersion(Path.Combine(projectPath, "obj", "Debug"));
         var refIntPath = Path.Combine(objDebugPath, "refInt");
 
-        var dllFile = Directory.GetFiles(refIntPath, "*.dll").FirstOrDefault();
+        string dllFile = null;
+        int retries = 3;
+        while (retries > 0)
+        {
+            dllFile = Directory.GetFiles(refIntPath, "*.dll").FirstOrDefault();
+            if (dllFile != null)
+            {
+                break;
+            }
+            retries--;
+            System.Threading.Thread.Sleep(150);
+        }
 
         if (dllFile == null)
         {

@@ -238,30 +238,32 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
 
     private static void OutputRouteExtensionMethod(SourceStringBuilder source, string SlugName, string parameterString, RouteTemplate routeTemplate, PageRoute pageRoute)
     {
-        if (pageRoute.Auth != null)
+        if (pageRoute.Auth != null && pageRoute.Auth.RequiresAuthentication)
         {
-            source.AppendLine($"// Requires Auth = {pageRoute.Auth.RequiresAuthentication}");
-            
-            if (pageRoute.Auth.Roles != null)
+            source.AppendLine("/// <summary>");
+            source.AppendLine($"/// Page Requires Authentication{(pageRoute.Auth.CustomAuth != null ? ", Custom Authentication Provider (CustomAuth)" : "")}");
+
+            if (pageRoute.Auth.Roles != null && pageRoute.Auth.Roles.Any())
             {
-                source.AppendLine($"// Roles = {string.Join(", ", pageRoute.Auth.Roles)}");
+                source.AppendLine($"/// Roles: {string.Join(", ", pageRoute.Auth.Roles)}");
             }
 
-            if (pageRoute.Auth.Policies != null)
+            if (pageRoute.Auth.Policies != null && pageRoute.Auth.Policies.Any())
             {
-                source.AppendLine($"// Policies = {string.Join(", ", pageRoute.Auth.Policies)}");
+                source.AppendLine($"/// Policies: {string.Join(", ", pageRoute.Auth.Policies)}");
             }
 
             if (pageRoute.Auth.CustomAuth != null)
             {
                 foreach (var customAuth in pageRoute.Auth.CustomAuth)
                 {
-                    source.AppendLine($"// Custom Auth Name = {customAuth.Name}");
-                    source.AppendLine($"// Custom Auth Ctor Params = {string.Join(", ", customAuth.CtorParams)}");
-                    source.AppendLine($"// Custom Auth Named Params = {string.Join(", ", customAuth.NamedParams)}");
+                    source.AppendLine($"/// Custom Authentication ProviderName: {customAuth.Name}");
+                    source.AppendLine($"/// Custom Auth Constructor Params: {string.Join(", ", customAuth.CtorParams)}");
+                    source.AppendLine($"/// Custom Auth Named Params: {string.Join(", ", customAuth.NamedParams)}");
                 }
             }
 
+            source.AppendLine("/// </summary>");
         }
 
         if (string.IsNullOrWhiteSpace(parameterString))
@@ -387,7 +389,7 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
         return config;
     }
     
-    private void GenerateJSInvokable(Settings config, List<(string MethodName, string InvokableName)> invokables)
+    public static void GenerateJSInvokable(Settings config, List<(string MethodName, string InvokableName)> invokables)
     {
         if (invokables.Count == 0)
         {

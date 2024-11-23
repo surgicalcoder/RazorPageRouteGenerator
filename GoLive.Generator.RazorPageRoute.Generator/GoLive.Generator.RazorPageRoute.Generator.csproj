@@ -36,8 +36,8 @@
 	<ItemGroup>
 		<!--<PackageReference Include="GoLive.ExpressionEvaluator" Version="1.0.2" GeneratePathProperty="true" PrivateAssets="all" Pack="true" />-->
 		<PackageReference Include="Meziantou.Polyfill" Version="1.0.42">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    <PrivateAssets>all</PrivateAssets>
+    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.11.0" PrivateAssets="all" />
 		<PackageReference Include="Mono.Cecil" Version="0.11.6" GeneratePathProperty="true" PrivateAssets="all" Pack="true" />
@@ -86,4 +86,7 @@
 			<ResolvedFileToPublish Include="@(RuntimeCopyLocalItems)" CopyToPublishDirectory="PreserveNewest" RelativePath="%(Filename)%(Extension)" />
 		</ItemGroup>
 	</Target>
+	<ItemGroup>
+		<None Include="build/GoLive.Generator.RazorPageRoute.Generator.props" Pack="true" PackagePath="build" />
+	</ItemGroup>
 </Project>

@@ -238,6 +238,32 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
 
     private static void OutputRouteExtensionMethod(SourceStringBuilder source, string SlugName, string parameterString, RouteTemplate routeTemplate, PageRoute pageRoute)
     {
+        if (pageRoute.Auth != null)
+        {
+            source.AppendLine($"// Requires Auth = {pageRoute.Auth.RequiresAuthentication}");
+            
+            if (pageRoute.Auth.Roles != null)
+            {
+                source.AppendLine($"// Roles = {string.Join(", ", pageRoute.Auth.Roles)}");
+            }
+
+            if (pageRoute.Auth.Policies != null)
+            {
+                source.AppendLine($"// Policies = {string.Join(", ", pageRoute.Auth.Policies)}");
+            }
+
+            if (pageRoute.Auth.CustomAuth != null)
+            {
+                foreach (var customAuth in pageRoute.Auth.CustomAuth)
+                {
+                    source.AppendLine($"// Custom Auth Name = {customAuth.Name}");
+                    source.AppendLine($"// Custom Auth Ctor Params = {string.Join(", ", customAuth.CtorParams)}");
+                    source.AppendLine($"// Custom Auth Named Params = {string.Join(", ", customAuth.NamedParams)}");
+                }
+            }
+
+        }
+
         if (string.IsNullOrWhiteSpace(parameterString))
         {
             source.AppendLine($"public static void {SlugName} (this NavigationManager manager, bool forceLoad = false, bool replace=false)");

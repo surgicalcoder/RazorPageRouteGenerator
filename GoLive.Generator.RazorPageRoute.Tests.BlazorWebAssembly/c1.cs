@@ -15,3 +15,8 @@ public class CustomAuth : Attribute, IAuthorizeData
     public string? Roles { get; set; }
     public string? AuthenticationSchemes { get; set; }
 }
+
+public static class Const
+{
+    public const string Admin = "Administrator";
+}

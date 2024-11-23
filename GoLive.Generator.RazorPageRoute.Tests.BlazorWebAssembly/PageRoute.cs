@@ -1,4 +1,4 @@
-// This file was generated on Sat, 23 Nov 2024 13:46:24 GMT
+// This file was generated on Sat, 23 Nov 2024 14:09:53 GMT
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -85,6 +85,30 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly
             }
 
             url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);
+            manager.NavigateTo(url, forceLoad, replace);
+        }
+
+        public static string CustomAuthPage()
+        {
+            string url = "/CustomAuthPage";
+            return url;
+        }
+
+        public static void CustomAuthPage(this NavigationManager manager, bool forceLoad = false, bool replace = false)
+        {
+            string url = "/CustomAuthPage";
+            manager.NavigateTo(url, forceLoad, replace);
+        }
+
+        public static string AuthPage()
+        {
+            string url = "/AuthPage";
+            return url;
+        }
+
+        public static void AuthPage(this NavigationManager manager, bool forceLoad = false, bool replace = false)
+        {
+            string url = "/AuthPage";
             manager.NavigateTo(url, forceLoad, replace);
         }
 

@@ -23,4 +23,9 @@
   <ItemGroup>
     <ProjectReference Include="..\GoLive.Generator.RazorPageRoute.Generator\GoLive.Generator.RazorPageRoute.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Update="Pages\DefaultAuthenticatedWithVariablename.razor">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+  </ItemGroup>
 </Project>

@@ -6,7 +6,7 @@ jobs:
   publish:
     env:
      MainProject: 'GoLive.Generator.RazorPageRoute.Generator/GoLive.Generator.RazorPageRoute.Generator.csproj'
-     BUILD_VER : '2.0'
+     BUILD_VER : '2.1'
     name: build, pack & publish
     runs-on: windows-latest
     steps:

@@ -34,7 +34,7 @@
 		<MeziantouPolyfill_IncludedPolyfills>T:System.Range|T:System.Index|T:System.Diagnostics.CodeAnalysis.NotNullWhenAttribute|T:System.Diagnostics.CodeAnalysis.DoesNotReturnAttribute</MeziantouPolyfill_IncludedPolyfills>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="GoLive.ExpressionEvaluator" Version="1.0.2" GeneratePathProperty="true" PrivateAssets="all" Pack="true" />
+		<!--<PackageReference Include="GoLive.ExpressionEvaluator" Version="1.0.2" GeneratePathProperty="true" PrivateAssets="all" Pack="true" />-->
 		<PackageReference Include="Meziantou.Polyfill" Version="1.0.42">
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -58,7 +58,7 @@
 			<TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Text_Encodings_Web)\lib\netstandard2.0\System.Text.Encodings.Web.dll" IncludeRuntimeDependency="false" />
 			<TargetPathWithTargetPlatformMoniker Include="$(PKGMicrosoft_Bcl_AsyncInterfaces)\lib\netstandard2.0\Microsoft.Bcl.AsyncInterfaces.dll" IncludeRuntimeDependency="false" />
 			<TargetPathWithTargetPlatformMoniker Include="$(PKGMono_Cecil)\lib\netstandard2.0\Mono.Cecil.dll" IncludeRuntimeDependency="false" />
-			<TargetPathWithTargetPlatformMoniker Include="$(PKGGoLive_ExpressionEvaluator)\lib\netstandard2.0\GoLive.ExpressionEvaluator.dll" IncludeRuntimeDependency="false" />
+			<!--<TargetPathWithTargetPlatformMoniker Include="$(PKGGoLive_ExpressionEvaluator)\lib\netstandard2.0\GoLive.ExpressionEvaluator.dll" IncludeRuntimeDependency="false" />-->
 			<TargetPathWithTargetPlatformMoniker Include="@(ResolvedCompileFileDefinitions)" IncludeRuntimeDependency="false" />
 		</ItemGroup>
 	</Target>

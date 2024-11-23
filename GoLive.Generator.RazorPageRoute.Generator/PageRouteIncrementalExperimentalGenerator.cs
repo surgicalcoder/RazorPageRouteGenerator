@@ -23,42 +23,22 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var defaultNamespace = context.AnalyzerConfigOptionsProvider.Select((provider, _) => !provider.GlobalOptions.TryGetValue("build_property.rootnamespace", out var ns) ? "DefaultNamespace" : ns);
-        
-        IncrementalValueProvider<List<PageRoute>> items = context.AnalyzerConfigOptionsProvider.Select((provider, _) =>
+
+        var projectDirProvider = context.AnalyzerConfigOptionsProvider.Select((provider, _) =>
         {
-            /*if (!provider.GlobalOptions.TryGetValue("build_property.EmitCompilerGeneratedFiles", out var emitCompilerFiles))
-            {
-                return null;
-            }
-
-            if (emitCompilerFiles.ToLowerInvariant() != "true")
-            {
-                context.RegisterSourceOutput(context.AnalyzerConfigOptionsProvider, (productionContext, source) => productionContext.AddSource("EmitCompilerGeneratedFiles_not_enabled.g.cs", string.Empty) );
-                return null;
-            }*/
-
             if (!provider.GlobalOptions.TryGetValue("build_property.projectdir", out var projectDir))
             {
                 return null;
             }
-
-            /*
-            if (!provider.GlobalOptions.TryGetValue("build_property.compilergeneratedfilesoutputpath", out var generatedLocation))
-            {
-                context.RegisterSourceOutput(context.AnalyzerConfigOptionsProvider, (productionContext, source) => productionContext.AddSource("Compiler_Generated_Files_Out_Path_missing.g.cs", string.Empty) );
-
-                return null;
-            }*/
-
             return projectDir;
-        }).Select((projectPath, _) =>
+        });
+        
+        var pageRouteItems = projectDirProvider.Select((projectPath, _) =>
         {
             if (projectPath == null)
             {
                 return null;
             }
-
-            List<PageRoute> retr = new();
             
             var dllFile = Scanner.GetDllPathFromProject(projectPath, out var assemblyResolver);
 
@@ -67,9 +47,34 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
             return Scanner.ScanForPageRoutesIncremental(assembly).CustomDistinctBy(e => e.Route).ToList();
         });
 
+        var invokableItems = projectDirProvider.Select((projectPath, _) =>
+        {
+            if (projectPath == null)
+            {
+                return null;
+            }
+
+            var dllFile = Scanner.GetDllPathFromProject(projectPath, out var assemblyResolver);
+
+            using var assembly = AssemblyDefinition.ReadAssembly(dllFile, new ReaderParameters { AssemblyResolver = assemblyResolver });
+
+            return Scanner.ScanForInvokables(assembly).ToList();
+        });
+
         var configFiles = context.AdditionalTextsProvider.Where(IsConfigurationFile);
 
-        context.RegisterSourceOutput(items.Combine(configFiles.Collect()).Combine(defaultNamespace), Output);
+        context.RegisterSourceOutput(pageRouteItems.Combine(configFiles.Collect()).Combine(defaultNamespace), Output);
+        context.RegisterSourceOutput(invokableItems.Combine(configFiles.Collect()).Combine(defaultNamespace), OutputInvokables);
+    }
+
+    private void OutputInvokables(SourceProductionContext productionContext, ((List<(string MethodName, string InvokableName)> Left, ImmutableArray<AdditionalText> Right) Left, string defaultNamespace) arg2)
+    {
+        var config = LoadConfig(arg2.Left.Right, arg2.defaultNamespace);
+        
+        if (config.Invokables is { Enabled: true })
+        {
+            GenerateJSInvokable(config, arg2.Left.Left);
+        }
     }
 
     private void Output(SourceProductionContext productionContext, ((List<PageRoute> Left, ImmutableArray<AdditionalText> Right) Left, string defaultNamespace) input)
@@ -184,11 +189,6 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
                     File.WriteAllText(config.OutputToFile, sourceOutput);
                 }
             }
-        }
-        
-        if (config.Invokables is { Enabled: true })
-        {
-            GenerateJSInvokable(config, context);
         }
     }
 
@@ -376,11 +376,9 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
         return config;
     }
     
-    private void GenerateJSInvokable(Settings config, GeneratorExecutionContext context)
+    private void GenerateJSInvokable(Settings config, List<(string MethodName, string InvokableName)> invokables)
     {
-        var invokables = context.Compilation.SyntaxTrees.Select(t => context.Compilation.GetSemanticModel(t)).Select(Scanner.ScanForInvokables).SelectMany(c => c).ToArray();
-
-        if (invokables.Length == 0)
+        if (invokables.Count == 0)
         {
             return;
         }

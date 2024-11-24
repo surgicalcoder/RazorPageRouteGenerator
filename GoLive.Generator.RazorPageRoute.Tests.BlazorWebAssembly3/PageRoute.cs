@@ -1,4 +1,4 @@
-// This file was generated on Sat, 23 Nov 2024 17:36:03 GMT
+// This file was generated on Sun, 24 Nov 2024 18:53:13 GMT
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -16,7 +16,6 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly3
             return url;
         }
 
-        // Requires Auth = False
         public static void Counter(this NavigationManager manager, bool forceLoad = false, bool replace = false)
         {
             string url = "/counter";
@@ -29,7 +28,6 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly3
             return url;
         }
 
-        // Requires Auth = False
         public static void Home(this NavigationManager manager, bool forceLoad = false, bool replace = false)
         {
             string url = "/";
@@ -42,7 +40,6 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly3
             return url;
         }
 
-        // Requires Auth = False
         public static void Weather(this NavigationManager manager, bool forceLoad = false, bool replace = false)
         {
             string url = "/weather";

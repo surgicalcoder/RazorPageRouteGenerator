@@ -1,4 +1,4 @@
-// This file was generated on Sat, 23 Nov 2024 17:36:02 GMT
+// This file was generated on Sun, 24 Nov 2024 18:53:13 GMT
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -23,7 +23,6 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly
             return url;
         }
 
-        // Requires Auth = False
         public static void Counter(this NavigationManager manager, System.String QSInput = default, bool forceLoad = false, bool replace = false)
         {
             string url = "/counter";
@@ -50,7 +49,6 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly
             return url;
         }
 
-        // Requires Auth = False
         public static void Counter_View(this NavigationManager manager, string id, System.String QSInput = default, bool forceLoad = false, bool replace = false)
         {
             string url = $"/counter/view/{id.ToString()}";
@@ -77,7 +75,6 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly
             return url;
         }
 
-        // Requires Auth = False
         public static void Counter_Viewbyid(this NavigationManager manager, System.Int32 id, System.String QSInput = default, bool forceLoad = false, bool replace = false)
         {
             string url = $"/counter/viewbyid/{id.ToString()}";
@@ -97,10 +94,19 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly
             return url;
         }
 
-        // Requires Auth = True
-        // Custom Auth Name = CustomAuth
-        // Custom Auth Ctor Params = [roles, Admin]
-        // Custom Auth Named Params = 
+        public class CustomAuthPage_AuthData : IAuthorizeData
+        {
+            public string Policy { get; set; } = "";
+            public string Roles { get; set; } = "Admin,superuser";
+            public string AuthenticationSchemes { get; set; } = "";
+        }
+
+        /// <summary>
+        /// Page Requires Authentication, Custom Authentication Provider (CustomAuth)
+        /// Custom Authentication ProviderName: GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly.CustomAuth
+        /// Custom Auth Constructor Params: [roles, Admin]
+        /// Custom Auth Named Params: 
+        /// </summary>
         public static void CustomAuthPage(this NavigationManager manager, bool forceLoad = false, bool replace = false)
         {
             string url = "/CustomAuthPage";
@@ -113,8 +119,17 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly
             return url;
         }
 
-        // Requires Auth = True
-        // Roles = Admin
+        public class AuthPage_AuthData : IAuthorizeData
+        {
+            public string Policy { get; set; } = "";
+            public string Roles { get; set; } = "Admin";
+            public string AuthenticationSchemes { get; set; } = "";
+        }
+
+        /// <summary>
+        /// Page Requires Authentication
+        /// Roles: Admin
+        /// </summary>
         public static void AuthPage(this NavigationManager manager, bool forceLoad = false, bool replace = false)
         {
             string url = "/AuthPage";
@@ -127,7 +142,6 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly
             return url;
         }
 
-        // Requires Auth = False
         public static void Fetchdata(this NavigationManager manager, bool forceLoad = false, bool replace = false)
         {
             string url = "/fetchdata";
@@ -140,7 +154,6 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly
             return url;
         }
 
-        // Requires Auth = False
         public static void Home(this NavigationManager manager, bool forceLoad = false, bool replace = false)
         {
             string url = "/";
@@ -153,7 +166,6 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly
             return url;
         }
 
-        // Requires Auth = False
         public static void NotFound(this NavigationManager manager, System.String path, bool forceLoad = false, bool replace = false)
         {
             string url = $"/{path.ToString()}";

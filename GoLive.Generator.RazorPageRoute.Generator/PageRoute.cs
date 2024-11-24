@@ -8,6 +8,7 @@ public record PageRoute(string Name, string Route, List<PageRouteQuerystringPara
 public class PageRouteAuth{
     public List<string> Roles { get; set; }
     public List<string> Policies { get; set; }
+    public List<string> AuthenticationSchemes { get; set; }
     public bool RequiresAuthentication { get; set; }
     public List<PageRouteAuthCustomAuth> CustomAuth { get; set; }
 }

@@ -1,19 +1,17 @@
-﻿#region
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using Data.Eval;
 using GoLive.Generator.RazorPageRoute.Generator.Routing;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Mono.Cecil;
 
-#endregion
 
 namespace GoLive.Generator.RazorPageRoute.Generator;
 
@@ -95,6 +93,12 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
         source.AppendLine("using System.Net.Http.Json;");
         source.AppendLine("using System.Collections.Generic;");
 
+        if (config.OutputIAuthorizeData)
+        {
+            source.AppendLine("using Microsoft.AspNetCore.Authorization;");
+            source.AppendLine("using Microsoft.AspNetCore.Components;");
+        }
+
         if (config.OutputExtensionMethod)
         {
             source.AppendLine("using Microsoft.AspNetCore.Components;");
@@ -144,7 +148,7 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
 
             if (config.OutputExtensionMethod)
             {
-                OutputRouteExtensionMethod(source, SlugName, parameterString, routeTemplate, pageRoute);
+                OutputRouteExtensionMethod(source, SlugName, parameterString, routeTemplate, pageRoute, config);
             }
         }
 
@@ -236,10 +240,39 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
     }
 
 
-    private static void OutputRouteExtensionMethod(SourceStringBuilder source, string SlugName, string parameterString, RouteTemplate routeTemplate, PageRoute pageRoute)
+    private static void OutputRouteExtensionMethod(SourceStringBuilder source, string SlugName, string parameterString, RouteTemplate routeTemplate, PageRoute pageRoute, Settings config)
     {
-        if (pageRoute.Auth != null && pageRoute.Auth.RequiresAuthentication)
+        if (pageRoute.Auth is { RequiresAuthentication: true })
         {
+
+            if (config.OutputIAuthorizeData)
+            {                    
+                source.AppendLine($"public class {SlugName}_AuthData : IAuthorizeData");
+                source.AppendOpenCurlyBracketLine();
+                
+                if (pageRoute.Auth.CustomAuth is { Count: > 0 })
+                {
+                    var authItem = pageRoute.Auth.CustomAuth.FirstOrDefault();
+                    var authSettings = config.Auth.First(e => e.Attribute == authItem.Name);
+                    
+                    var policyList = EvaluateCode(authSettings.PolicyTransformer, authItem);
+                    var rolesList = EvaluateCode(authSettings.RolesTransformer, authItem);
+                    var authSchemesList = EvaluateCode(authSettings.AuthenticationSchemeTransformer, authItem);
+                    
+                    source.AppendLine($"public string Policy {{ get; set; }} = \"{string.Join(",", policyList ?? new List<string>())}\";");
+                    source.AppendLine($"public string Roles {{ get; set; }} = \"{string.Join(",", rolesList ?? new List<string>())}\";");
+                    source.AppendLine($"public string AuthenticationSchemes {{ get; set; }} = \"{string.Join(",", authSchemesList ?? new List<string>())}\";");
+                }
+                else
+                {
+                    source.AppendLine($"public string Policy {{ get; set; }} = \"{string.Join(",", pageRoute.Auth.Policies ?? new List<string>())}\";");
+                    source.AppendLine($"public string Roles {{ get; set; }} = \"{string.Join(",", pageRoute.Auth.Roles ?? new List<string>())}\";");
+                    source.AppendLine($"public string AuthenticationSchemes {{ get; set; }} = \"{string.Join(",", pageRoute.Auth.AuthenticationSchemes ?? new List<string>())}\";");
+                }
+                source.AppendCloseCurlyBracketLine();
+            }
+
+
             source.AppendLine("/// <summary>");
             source.AppendLine($"/// Page Requires Authentication{(pageRoute.Auth.CustomAuth != null ? ", Custom Authentication Provider (CustomAuth)" : "")}");
 
@@ -327,6 +360,20 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
 
         source.AppendLine("manager.NavigateTo(url, forceLoad, replace);");
         source.AppendCloseCurlyBracketLine();
+    }
+
+    private static List<string> EvaluateCode(string transformer, PageRouteAuthCustomAuth authItem)
+    {
+        if (string.IsNullOrWhiteSpace(transformer))
+        {
+            return null;
+        }
+        Evaluator policyEvaluator = new(transformer);
+        policyEvaluator.AddUsing("System.Collections.Generic");
+        policyEvaluator["ConstructorParameters"] = authItem.CtorParams;
+        policyEvaluator["NamedParameters"] = authItem.NamedParams;
+        var policyList = policyEvaluator.Eval<List<string>>();
+        return policyList;
     }
 
 

@@ -149,6 +149,10 @@ public static class Scanner
                 {
                     retr.Policies = namedArg.Argument.Value.ToString().Split(',').Select(policy => policy.Trim()).ToList();
                 }
+                else if (namedArg.Name == "AuthenticationSchemes")
+                {
+                    retr.AuthenticationSchemes = namedArg.Argument.Value.ToString().Split(',').Select(scheme => scheme.Trim()).ToList();
+                }
             }
         }
 
@@ -188,7 +192,7 @@ public static class Scanner
                     namedArgs[namedArg.Name] = namedArg.Argument.Value.ToString();
                 }
                 retr.CustomAuth ??= [];
-                retr.CustomAuth.Add(new PageRouteAuthCustomAuth(attr.AttributeType.Name, ctorArgs, namedArgs));
+                retr.CustomAuth.Add(new PageRouteAuthCustomAuth(attr.AttributeType.FullName, ctorArgs, namedArgs));
             }
         }
 

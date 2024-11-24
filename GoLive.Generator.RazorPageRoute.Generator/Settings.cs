@@ -19,6 +19,7 @@ public class Settings
     public Settings_JSInvokables Invokables { get; set; } = new();
 
     public List<Settings_Auth> Auth { get; set; } = [];
+    public bool OutputIAuthorizeData { get; set; }
 }
 
 public class Settings_JSInvokables
@@ -32,4 +33,7 @@ public class Settings_JSInvokables
 public class Settings_Auth
 {
     public string Attribute { get; set; }
+    public string PolicyTransformer { get; set; }
+    public string RolesTransformer { get; set; }
+    public string AuthenticationSchemeTransformer { get; set; }
 }

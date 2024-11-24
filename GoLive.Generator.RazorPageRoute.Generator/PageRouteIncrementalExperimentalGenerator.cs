@@ -244,31 +244,31 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
     {
         if (pageRoute.Auth is { RequiresAuthentication: true })
         {
-
             if (config.OutputIAuthorizeData)
-            {                    
+            {
                 source.AppendLine($"public class {SlugName}_AuthData : IAuthorizeData");
                 source.AppendOpenCurlyBracketLine();
-                
+
                 if (pageRoute.Auth.CustomAuth is { Count: > 0 })
                 {
                     var authItem = pageRoute.Auth.CustomAuth.FirstOrDefault();
                     var authSettings = config.Auth.First(e => e.Attribute == authItem.Name);
-                    
+
                     var policyList = EvaluateCode(authSettings.PolicyTransformer, authItem);
                     var rolesList = EvaluateCode(authSettings.RolesTransformer, authItem);
                     var authSchemesList = EvaluateCode(authSettings.AuthenticationSchemeTransformer, authItem);
-                    
-                    source.AppendLine($"public string Policy {{ get; set; }} = \"{string.Join(",", policyList ?? new List<string>())}\";");
-                    source.AppendLine($"public string Roles {{ get; set; }} = \"{string.Join(",", rolesList ?? new List<string>())}\";");
-                    source.AppendLine($"public string AuthenticationSchemes {{ get; set; }} = \"{string.Join(",", authSchemesList ?? new List<string>())}\";");
+
+                    source.AppendLine($"public string Policy {{ get; set; }} = {(string.Join(",", policyList ?? []).Length == 0 ? "String.Empty" : $"\"{string.Join(", ", policyList)}\"")}; ");
+                    source.AppendLine($"public string Roles {{ get; set; }} = {(string.Join(",", rolesList ?? []).Length == 0 ? "String.Empty" : $"\"{string.Join(", ", rolesList)}\"")}; ");
+                    source.AppendLine($"public string AuthenticationSchemes {{ get; set; }} = {(string.Join(",", authSchemesList ?? []).Length == 0 ? "String.Empty" : $"\"{string.Join(", ", authSchemesList)}\"")}; ");
                 }
                 else
                 {
-                    source.AppendLine($"public string Policy {{ get; set; }} = \"{string.Join(",", pageRoute.Auth.Policies ?? new List<string>())}\";");
-                    source.AppendLine($"public string Roles {{ get; set; }} = \"{string.Join(",", pageRoute.Auth.Roles ?? new List<string>())}\";");
-                    source.AppendLine($"public string AuthenticationSchemes {{ get; set; }} = \"{string.Join(",", pageRoute.Auth.AuthenticationSchemes ?? new List<string>())}\";");
+                    source.AppendLine($"public string Policy {{ get; set; }} = {(string.Join(",", pageRoute.Auth.Policies ?? []).Length == 0 ? "String.Empty" : $"\"{string.Join(",", pageRoute.Auth.Policies)}\"")};");
+                    source.AppendLine($"public string Roles {{ get; set; }} = {(string.Join(",", pageRoute.Auth.Roles ?? []).Length == 0 ? "String.Empty" : $"\"{string.Join(",", pageRoute.Auth.Roles)}\"")}; ");
+                    source.AppendLine($"public string AuthenticationSchemes {{ get; set; }} = {(string.Join(",", pageRoute.Auth.AuthenticationSchemes ?? []).Length == 0 ? "String.Empty" : $"\"{string.Join(", ", pageRoute.Auth.AuthenticationSchemes)}\"")}; ");
                 }
+
                 source.AppendCloseCurlyBracketLine();
             }
 

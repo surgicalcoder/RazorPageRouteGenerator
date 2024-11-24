@@ -1,9 +1,11 @@
-// This file was generated on Sun, 24 Nov 2024 18:53:13 GMT
+// This file was generated on Sun, 24 Nov 2024 18:56:16 GMT
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Net.Http.Json;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components;
 
 namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly
@@ -96,9 +98,9 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly
 
         public class CustomAuthPage_AuthData : IAuthorizeData
         {
-            public string Policy { get; set; } = "";
-            public string Roles { get; set; } = "Admin,superuser";
-            public string AuthenticationSchemes { get; set; } = "";
+            public string Policy { get; set; } = String.Empty;
+            public string Roles { get; set; } = "Admin, superuser";
+            public string AuthenticationSchemes { get; set; } = String.Empty;
         }
 
         /// <summary>
@@ -121,9 +123,9 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly
 
         public class AuthPage_AuthData : IAuthorizeData
         {
-            public string Policy { get; set; } = "";
+            public string Policy { get; set; } = String.Empty;
             public string Roles { get; set; } = "Admin";
-            public string AuthenticationSchemes { get; set; } = "";
+            public string AuthenticationSchemes { get; set; } = String.Empty;
         }
 
         /// <summary>

@@ -159,23 +159,11 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
 
         if (!string.IsNullOrWhiteSpace(sourceOutput))
         {
-            if (string.IsNullOrWhiteSpace(config.OutputToFile) && config.OutputToFiles.Count == 0)
+            if (config.OutputToFiles.Count > 0)
             {
-                productionContext.AddSource("PageRoutes.g.cs", sourceOutput);
-            }
-            else
-            {
-                if (config.OutputToFiles.Count > 0)
+                foreach (var configOutputToFile in config.OutputToFiles)
                 {
-                    foreach (var configOutputToFile in config.OutputToFiles)
-                    {
-                        File.WriteAllText(configOutputToFile, sourceOutput);
-                    }
-                }
-
-                if (!string.IsNullOrWhiteSpace(config.OutputToFile))
-                {
-                    File.WriteAllText(config.OutputToFile, sourceOutput);
+                    File.WriteAllText(configOutputToFile, sourceOutput);
                 }
             }
         }
@@ -401,12 +389,6 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
             config.Namespace = defaultNamespace;
         }
 
-        if (!string.IsNullOrWhiteSpace(config.OutputToFile))
-        {
-            var fullPath = Path.Combine(configFileDirectory, config.OutputToFile);
-            config.OutputToFile = Path.GetFullPath(fullPath);
-        }
-
         if (config.OutputToFiles != null && config.OutputToFiles.Any())
         {
             config.OutputToFiles = config.OutputToFiles.Select(r =>
@@ -417,14 +399,8 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
             }).ToList();
         }
         
-        if (config.Invokables != null && (!string.IsNullOrWhiteSpace(config.Invokables.OutputToFile) || config.Invokables.OutputToFiles.Count > 0))
+        if (config.Invokables != null && config.Invokables.OutputToFiles.Count > 0)
         {
-            if (!string.IsNullOrWhiteSpace(config.Invokables.OutputToFile))
-            {
-                var fullPath = Path.Combine(configFileDirectory, config.Invokables.OutputToFile);
-                config.Invokables.OutputToFile = Path.GetFullPath(fullPath);
-            }
-
             foreach (var outputFile in config.Invokables.OutputToFiles)
             {
                 var fullPath = Path.Combine(configFileDirectory, outputFile);
@@ -452,11 +428,6 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
         }
             
         jsBuilder.AppendLine("};");
-
-        if (!string.IsNullOrWhiteSpace(config.Invokables.OutputToFile))
-        {
-            File.WriteAllText(config.Invokables.OutputToFile, jsBuilder.ToString());
-        }
 
         if (config.Invokables.OutputToFiles.Count > 0)
         {

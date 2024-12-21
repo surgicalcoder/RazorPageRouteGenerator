@@ -44,9 +44,8 @@ public static class Scanner
             }
         }
     }
-
-
-    public static string GetDllPathFromProject(string projectPath, out DefaultAssemblyResolver assemblyResolver)
+    
+    public static string GetDllPathFromProject(string projectPath, out DefaultAssemblyResolver assemblyResolver, string[] additionalSearchDirectories = null)
     {
         var debugPath = getHighestFolderVersion(Path.Combine(projectPath, "bin", "Debug"));
         ;
@@ -73,6 +72,13 @@ public static class Scanner
 
         assemblyResolver = new DefaultAssemblyResolver();
         assemblyResolver.AddSearchDirectory(refIntPath);
+        if (additionalSearchDirectories != null)
+        {
+            foreach (var searchDirectory in additionalSearchDirectories)
+            {
+                assemblyResolver.AddSearchDirectory(searchDirectory);
+            }
+        }
         //assemblyResolver.AddSearchDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "dotnet", "shared", "Microsoft.AspNetCore.App", "9.0.0"));
         assemblyResolver.AddSearchDirectory(debugPath);
 

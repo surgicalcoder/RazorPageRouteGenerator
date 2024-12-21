@@ -10,7 +10,7 @@
         <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
         <IncludeBuildOutput>true</IncludeBuildOutput>
         <DevelopmentDependency>true</DevelopmentDependency>
-
+		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
         <PackageId>GoLive.Generator.RazorPageRoute</PackageId>
         <Authors>SurgicalCoder</Authors>
         <Company>N/A</Company>

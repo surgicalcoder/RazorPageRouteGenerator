@@ -52,7 +52,7 @@ IEnumerable<(string MethodName, string InvokableName)> GetInvokeables(string pro
     }
     catch (FileNotFoundException e)
     {
-        Console.WriteLine("refInt directory not found, source scanning not currently supported.");
+        Console.WriteLine("refInt directory not found, source scanning not currently supported for invokables.");
 
         return new List<(string MethodName, string InvokableName)>();;
     }

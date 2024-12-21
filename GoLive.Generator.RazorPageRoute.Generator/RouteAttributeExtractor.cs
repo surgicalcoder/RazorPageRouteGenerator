@@ -32,6 +32,7 @@ public class RouteAttributeExtractor
             {
                 var className = classDeclaration.Identifier.Text;
                 var routes = new List<string>();
+                var queryString = new List<PageRouteQuerystringParameter>();
 
                 var attributes = classDeclaration.DescendantNodes()
                     .OfType<AttributeSyntax>()
@@ -48,9 +49,24 @@ public class RouteAttributeExtractor
                     }
                 }
 
+                var properties = classDeclaration.DescendantNodes().OfType<PropertyDeclarationSyntax>();
+                foreach (var property in properties)
+                {
+                    var hasQueryAttribute = property.AttributeLists
+                        .SelectMany(attrList => attrList.Attributes)
+                        .Any(attr => attr.Name.ToString().Contains("SupplyParameterFromQueryAttribute") || attr.Name.ToString().Contains("SupplyParameterFromQuery"));
+                
+                    if (hasQueryAttribute)
+                    {
+                        var propertyName = property.Identifier.Text;
+                        var propertyType = property.Type.ToString();
+                        queryString.Add(new PageRouteQuerystringParameter(propertyName, propertyType));
+                    }
+                }
+                
                 if (routes.Any())
                 {
-                    extractedRoutes.Add(new ExtractedRoutes { ClassName = className, Routes = routes });
+                    extractedRoutes.Add(new ExtractedRoutes { ClassName = className, Routes = routes, QueryString = queryString });
                 }
             }
         }

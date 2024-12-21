@@ -20,7 +20,7 @@ public static class FileParseScanner
             {
                 foreach (var extractedRouteRoute in extractedRoute.Routes)
                 {
-                    yield return new PageRoute(extractedRoute.ClassName, extractedRouteRoute, new List<PageRouteQuerystringParameter>());
+                    yield return new PageRoute(extractedRoute.ClassName, extractedRouteRoute, extractedRoute.QueryString);
                 }
             }
         }

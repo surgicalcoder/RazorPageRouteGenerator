@@ -48,7 +48,7 @@ public static class Scanner
     public static string GetDllPathFromProject(string projectPath, out DefaultAssemblyResolver assemblyResolver, string[] additionalSearchDirectories = null)
     {
         var debugPath = getHighestFolderVersion(Path.Combine(projectPath, "bin", "Debug"));
-        ;
+        
         var objDebugPath = getHighestFolderVersion(Path.Combine(projectPath, "obj", "Debug"));
         var refIntPath = Path.Combine(objDebugPath, "refInt");
 

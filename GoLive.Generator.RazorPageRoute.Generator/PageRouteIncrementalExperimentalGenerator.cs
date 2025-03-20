@@ -55,7 +55,27 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
 
             var dllFile = Scanner.GetDllPathFromProject(projectPath, out var assemblyResolver);
 
-            var assemblyData = File.ReadAllBytes(dllFile);
+            byte[] assemblyData = null;
+            int maxRetries = 5;
+            int currentTry = 0;
+            while (currentTry < maxRetries)
+            {
+                try
+                {
+                    using (var fileStream = new FileStream(dllFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+                    {
+                        assemblyData = new byte[fileStream.Length];
+                        fileStream.Read(assemblyData, 0, assemblyData.Length);
+                    }
+                    break;
+                }
+                catch (IOException)
+                {
+                    currentTry++;
+                    if (currentTry >= maxRetries) throw;
+                    System.Threading.Thread.Sleep(150);
+                }
+            }
             using var assembly = AssemblyDefinition.ReadAssembly(new MemoryStream(assemblyData), new ReaderParameters { AssemblyResolver = assemblyResolver });
 
             var routes = Scanner.ScanForPageRoutesIncremental(assembly, config).CustomDistinctBy(e => e.Route).ToList();

@@ -62,12 +62,12 @@ public static class Scanner
                 break;
             }
             retries--;
-            System.Threading.Thread.Sleep(150);
+            System.Threading.Thread.Sleep(150 * (int)Math.Pow(2, 3 - retries));
         }
 
         if (dllFile == null)
         {
-            throw new FileNotFoundException("No DLL file found in refInt directory.");
+            throw new FileNotFoundException($"No DLL file found in refInt directory (Looked in {refIntPath}).");
         }
 
         assemblyResolver = new DefaultAssemblyResolver();
@@ -141,24 +141,69 @@ public static class Scanner
             {
                 if (arg.Type.FullName == "System.String")
                 {
-                    retr.Roles = arg.Value.ToString().Split(',').Select(role => role.Trim()).ToList();
+                    // Try to get the constant reference if available
+                    var argConstant = arg.Value as FieldReference;
+
+                    if (argConstant != null && argConstant.DeclaringType != null)
+                    {
+                        retr.Roles = new List<string> { $"{argConstant.DeclaringType.Name}.{argConstant.Name}" };
+                    }
+                    else
+                    {
+                        var argValue = arg.Value?.ToString();
+
+                        if (!string.IsNullOrEmpty(argValue))
+                        {
+                            retr.Roles = argValue.Split(',').Select(role => role.Trim()).ToList();
+                        }
+                    }
                 }
             }
 
             foreach (var namedArg in attr.Properties)
             {
-                if (namedArg.Name == "Roles")
+                var roleArgument = namedArg.Argument.Value;
+                var roleConstant = roleArgument as FieldReference;
+
+                if (roleConstant != null && roleConstant.DeclaringType != null)
                 {
-                    retr.Roles = namedArg.Argument.Value.ToString().Split(',').Select(role => role.Trim()).ToList();
+                    retr.Roles = new List<string> { $"{roleConstant.DeclaringType.Name}.{roleConstant.Name}" };
                 }
-                else if (namedArg.Name == "Policy")
+                else
                 {
-                    retr.Policies = namedArg.Argument.Value.ToString().Split(',').Select(policy => policy.Trim()).ToList();
+                    retr.Roles = roleArgument.ToString().Split(',').Select(role => role.Trim()).ToList();
                 }
-                else if (namedArg.Name == "AuthenticationSchemes")
+
+                if (namedArg.Name == "Policy")
                 {
-                    retr.AuthenticationSchemes = namedArg.Argument.Value.ToString().Split(',').Select(scheme => scheme.Trim()).ToList();
+                    var policyArgument = namedArg.Argument.Value;
+                    var policyConstant = policyArgument as FieldReference;
+
+                    if (policyConstant != null && policyConstant.DeclaringType != null)
+                    {
+                        retr.Policies = new List<string> { $"{policyConstant.DeclaringType.Name}.{policyConstant.Name}" };
+                    }
+                    else
+                    {
+                        retr.Policies = policyArgument.ToString().Split(',').Select(policy => policy.Trim()).ToList();
+                    }
                 }
+
+                if (namedArg.Name == "AuthenticationSchemes")
+                    {
+                        var schemeArgument = namedArg.Argument.Value;
+                        var schemeConstant = schemeArgument as FieldReference;
+
+                        if (schemeConstant != null && schemeConstant.DeclaringType != null)
+                        {
+                            retr.AuthenticationSchemes = new List<string> { $"{schemeConstant.DeclaringType.Name}.{schemeConstant.Name}" };
+                        }
+                        else
+                        {
+                            retr.AuthenticationSchemes = schemeArgument.ToString().Split(',').Select(scheme => scheme.Trim()).ToList();
+                        }
+                    }
+                
             }
         }
 

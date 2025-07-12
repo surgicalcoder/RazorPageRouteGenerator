@@ -14,13 +14,15 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 9.0.x
       - name: Setup NuGet
-        uses: nuget/setup-nuget@v1
+        uses: nuget/setup-nuget@v2
+        with:
+          nuget-api-key: ${{secrets.NUGET_KEY}}
       - name: Get Build Version
         run: |
           echo "BUILD_VERSION=${{ format('{0}.{1}', env.BUILD_VER, github.run_number ) }}-alpha" >> $GITHUB_ENV
-      - name: Build Main 
-        run: dotnet pack $MainProject --configuration Release -p:Version=$env:BUILD_VERSION -p:PackageVersion=$env:BUILD_VERSION -p:NuGetVersion=$env:BUILD_VERSION -p:GeneratePackageOnBuild=false
+      - name: Build
+        run: dotnet pack $SOLUTION --configuration Release -p:Version=$env:BUILD_VERSION -p:PackageVersion=$env:BUILD_VERSION -p:GeneratePackageOnBuild=false
       - name: Publish
-        run: nuget push **\*.nupkg -Source 'https://api.nuget.org/v3/index.json' -ApiKey ${{secrets.NUGET_KEY}}
+        run: nuget push **/*.nupkg -Source 'https://api.nuget.org/v3/index.json' 

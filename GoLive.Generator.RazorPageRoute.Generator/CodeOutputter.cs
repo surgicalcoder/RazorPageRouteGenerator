@@ -296,8 +296,14 @@ internal static class CodeOutputter
         return policyList;
     }
 
-    public static void GenerateJSInvokable(Settings config, List<(string MethodName, string InvokableName)> invokables)
+    public static void GenerateJSInvokable(Settings config, List<PageRoute> pageRoutes)
     {
+        // Filter PageRoutes that have an Invokable
+        var invokables = pageRoutes
+            .Where(pr => pr.Invokables != null && pr.Invokables.Any())
+            .SelectMany(pr => pr.Invokables)
+            .ToList();
+
         if (invokables.Count == 0)
         {
             return;
@@ -306,9 +312,9 @@ internal static class CodeOutputter
         var jsBuilder = new StringBuilder();
         jsBuilder.AppendLine($"const {config.Invokables.JSClassName} = {{");
 
-        foreach (var (methodName, invokableName) in invokables)
+        foreach (var invoke in invokables)
         {
-            jsBuilder.AppendLine($"{methodName.Replace(".", "_")}: \"{invokableName}\", ");
+            jsBuilder.AppendLine($"{invoke.InvokableName.Replace(".", "_")}: \"{invoke.MethodName}\", ");
         }
 
         jsBuilder.AppendLine("};");

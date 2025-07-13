@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis;
 
 namespace GoLive.Generator.RazorPageRoute.Generator;
 
-public record PageRoute(string Name, string Route, List<PageRouteQuerystringParameter> QueryString, PageRouteAuth Auth = null);
+public record PageRoute(string Name, string Route, List<PageRouteQuerystringParameter> QueryString, PageRouteAuth Auth = null, List<Invokable> Invokables = null);
     
 public class PageRouteAuth{
     public List<string> Roles { get; set; }
@@ -12,6 +12,8 @@ public class PageRouteAuth{
     public bool RequiresAuthentication { get; set; }
     public List<PageRouteAuthCustomAuth> CustomAuth { get; set; }
 }
+
+public record Invokable(string MethodName, string InvokableName);
 
 public record PageRouteAuthCustomAuth(string Name, Dictionary<string, string> CtorParams, Dictionary<string, string> NamedParams);
 

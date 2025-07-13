@@ -12,19 +12,14 @@ public static class Scanner
     private static readonly string componentBaseTypeName = "Microsoft.AspNetCore.Components.ComponentBase";
     public const string jsInvokableAttribute = "Microsoft.JSInterop.JSInvokableAttribute";
 
-    public static IEnumerable<(string MethodName, string InvokableName)> ScanForInvokables(AnalysisResult input)
+    public static IEnumerable<Invokable> ScanForInvokables(ClassInfo input)
     {
-        // Pseudocode:  
-        // 1. Get all classes in input.Classes that inherit from ComponentBase and are non-abstract.
-        // 2. For each class, iterate its methods.
-        // 3. For each method, check for [JSInvokable] attribute.
-        // 4. If found, extract the method name and the invokable identifier.
-        // 5. Yield (FullTypeName.MethodName, InvokableIdentifier) for each match.
-
-        var types = input.Classes
-            .Where(t => t.BaseTypes != null && t.BaseTypes.Contains(componentBaseTypeName) &&
-                        (t.Modifiers == null || !t.Modifiers.Contains("abstract")))
-            .ToList();
+        var types = new List<ClassInfo>();
+        if (input.BaseTypes != null && input.BaseTypes.Contains(componentBaseTypeName) &&
+            (input.Modifiers == null || !input.Modifiers.Contains("abstract")))
+        {
+            types.Add(input);
+        }
 
         foreach (var type in types)
         {
@@ -39,7 +34,7 @@ public static class Scanner
                 {
                     string methodName = method.Name;
                     string identifier = jsInvokableAttr.Arguments[0];
-                    yield return ($"{type.Name}.{methodName}", identifier);
+                    yield return new Invokable($"{type.Name}.{methodName}", identifier);
                 }
             }
         }
@@ -59,10 +54,11 @@ public static class Scanner
                 .ToList();
 
         var pageAuth = getPageAuth(input, settings);
+        var invokables = ScanForInvokables(input).ToList();
 
         foreach (var route in routes)
         {
-            yield return new PageRoute(input.Name, route, queryStringParams, pageAuth);
+            yield return new PageRoute(input.Name, route, queryStringParams, pageAuth, invokables);
         }
     }
 

@@ -145,6 +145,13 @@ public static class SourceCodeAnalyzer
         return result;
     }
 
+    // Pseudocode:
+    // - When extracting positional attribute arguments, check if the argument is a string literal.
+    // - If so, extract its value using the StringLiteralExpression's Token.ValueText property.
+    // - Otherwise, use arg.ToString() as before.
+    // - Replace: arguments.Add(arg.ToString());
+    // - With: if (arg.Expression is LiteralExpressionSyntax literal && literal.IsKind(SyntaxKind.StringLiteralExpression)) { arguments.Add(literal.Token.ValueText); } else { arguments.Add(arg.ToString()); }
+
     private static List<AttributeInfo> ExtractAttributes(SyntaxList<AttributeListSyntax> attributeLists)
     {
         var attributes = new List<AttributeInfo>();
@@ -162,7 +169,6 @@ public static class SourceCodeAnalyzer
                     {
                         if (arg.NameEquals != null)
                         {
-                            // Named argument: name = value
                             namedArguments[arg.NameEquals.Name.Identifier.ValueText] = arg.Expression.ToString();
                         }
                         else if (arg.NameColon != null)
@@ -172,8 +178,7 @@ public static class SourceCodeAnalyzer
                         }
                         else
                         {
-                            // Positional argument
-                            arguments.Add(arg.ToString());
+                            arguments.Add(arg.GetArgumentValue());
                         }
                     }
                 }

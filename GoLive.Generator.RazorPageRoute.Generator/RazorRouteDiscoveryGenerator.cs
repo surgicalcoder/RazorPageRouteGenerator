@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using GoLive.Generator.RazorPageRoute.Generator.CodeReader;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Text;
 
 namespace GoLive.Generator.RazorPageRoute.Generator;
+
+
 [Generator]
 public class BlazorRouteDiscoveryGenerator : ISourceGenerator
 {
@@ -37,10 +34,9 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
             var generatedFolder = Path.Combine(GetMSBuildProperty(context, "projectdir"), GetMSBuildProperty(context, "CompilerGeneratedFilesOutputPath"));
 
             var highestFolder = Scanner.getHighestFolderVersion(Path.Combine(baseIntermediateOutputPath, "Debug"));
-            // Construct path to Razor generated files
             string razorPath;
 
-            if (generatedFolder == null && !Directory.Exists(generatedFolder))
+            if (generatedFolder == null || !Directory.Exists(generatedFolder))
             {
                 razorPath = Path.Combine(highestFolder, "Razor");
 
@@ -60,14 +56,11 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
 
 
 
-                // Discover routes from .g.cs files
-                var discoveredRoutes = DiscoverRoutesFromGeneratedFiles(razorPath);
+            var discoveredRoutes = DiscoverRoutesFromGeneratedFiles(razorPath);
 
-            // Generate route registration code
             var generatedCode = GenerateRouteRegistrationCode(discoveredRoutes);
 
-            // Add the generated source to the compilation
-            context.AddSource("BlazorRouteDiscovery.g.cs", SourceText.From(generatedCode, Encoding.UTF8));
+
         }
         catch (Exception ex)
         {
@@ -78,34 +71,48 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
         }
     }
 
+    private void GenerateRouteRegistrationCode(List<PageRoute> Routes, Settings settings)
+    {
+        CodeOutputter.GenerateOutput(settings, Routes);
+
+        if (settings.Invokables.Enabled)
+        {
+            CodeOutputter.GenerateJSInvokable(settings, );
+        }
+    }
+
     private string GetMSBuildProperty(GeneratorExecutionContext context, string propertyName)
     {
         return context.AnalyzerConfigOptions.GlobalOptions.TryGetValue($"build_property.{propertyName}", out var value)
             ? value : null;
     }
 
-    private List<RouteInfo> DiscoverRoutesFromGeneratedFiles(string razorPath)
+    private List<PageRoute> DiscoverRoutesFromGeneratedFiles(string razorPath, Settings settings)
     {
-
         var generatedFiles = Directory.GetFiles(razorPath, "*.g.cs", SearchOption.AllDirectories);
+
+        List<PageRoute> retr = new();
 
         foreach (var generatedFile in generatedFiles)
         {
-            AnalysisResult analysisResult = SourceCodeAnalyzer.AnalyzeSourceFile(generatedFile);
+            var analysisResult = SourceCodeAnalyzer.AnalyzeSourceFile(generatedFile);
 
             if (analysisResult.Classes.Count == 0)
             {
                 continue; // Skip files with no classes
             }
 
-
-
-            Console.WriteLine(analysisResult.Classes.Count);
+            foreach (var @class in analysisResult.Classes)
+            {
+                var scanForPageRoutes = Scanner.ScanForPageRoutes(@class, settings);
+                if (scanForPageRoutes != null && scanForPageRoutes.Any())
+                {
+                    retr.AddRange(scanForPageRoutes);
+                }
+            }
         }
 
-
-
-        return Array.Empty<RouteInfo>().ToList();
+        return retr;
     }
 
 }

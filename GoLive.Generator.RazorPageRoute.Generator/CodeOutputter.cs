@@ -1,105 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 using Data.Eval;
 using GoLive.Generator.RazorPageRoute.Generator.Routing;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Mono.Cecil;
-
 
 namespace GoLive.Generator.RazorPageRoute.Generator;
 
-[Generator]
-public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
+internal static class CodeOutputter
 {
-    public void Initialize(IncrementalGeneratorInitializationContext context)
-    {
-        var defaultNamespace = context.AnalyzerConfigOptionsProvider.Select((provider, _) => !provider.GlobalOptions.TryGetValue("build_property.rootnamespace", out var ns) ? "DefaultNamespace" : ns);
 
-        var projectDirProvider = context.AnalyzerConfigOptionsProvider.Select((provider, _) =>
-        {
-            var globalOptions = new Dictionary<string, string>();
-            foreach (var option in provider.GlobalOptions.Keys)
-            {
-                if (provider.GlobalOptions.TryGetValue(option, out var value))
-                {
-                    globalOptions[option] = value;
-                }
-            }
-
-            if (!provider.GlobalOptions.TryGetValue("build_property.projectdir", out var projectDir))
-            {
-                return null;
-            }
-            return projectDir;
-        });
-        
-        var configFiles = context.AdditionalTextsProvider.Where(IsConfigurationFile);
-
-        var pageRouteItems = projectDirProvider.Combine(configFiles.Collect()).Select((projectPathAndConfigFiles, _) =>
-        {
-            var (projectPath, configFiles) = projectPathAndConfigFiles;
-
-            if (projectPath == null)
-            {
-                return default;
-            }
-
-            var config = LoadConfig(configFiles, "DefaultNamespace");
-
-            var dllFile = Scanner.GetDllPathFromProject(projectPath, out var assemblyResolver);
-
-            byte[] assemblyData = null;
-            int maxRetries = 5;
-            int currentTry = 0;
-            while (currentTry < maxRetries)
-            {
-                try
-                {
-                    using (var fileStream = new FileStream(dllFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
-                    {
-                        assemblyData = new byte[fileStream.Length];
-                        fileStream.Read(assemblyData, 0, assemblyData.Length);
-                    }
-                    break;
-                }
-                catch (IOException)
-                {
-                    currentTry++;
-                    if (currentTry >= maxRetries) throw;
-                    System.Threading.Thread.Sleep(150);
-                }
-            }
-            using var assembly = AssemblyDefinition.ReadAssembly(new MemoryStream(assemblyData), new ReaderParameters { AssemblyResolver = assemblyResolver });
-
-            List<PageRoute> routes = Scanner.ScanForPageRoutesIncremental(assembly, config).CustomDistinctBy(e => e.Route).ToList();
-            var incrementals = Scanner.ScanForInvokables(assembly).ToList();
-
-            return (routes, incrementals);
-        });
-
-        context.RegisterSourceOutput(pageRouteItems.Combine(configFiles.Collect()).Combine(defaultNamespace), Output);
-    }
-
-    private void Output(SourceProductionContext productionContext, (((List<PageRoute> routes, List<(string MethodName, string InvokableName)> incrementals) Left, ImmutableArray<AdditionalText> Right) Left, string defaultNamespace) arg2)
-    {
-        var config = LoadConfig(arg2.Left.Right, arg2.defaultNamespace);
-        
-        GenerateOutput(productionContext, config, arg2.Left.Left.routes);
-        
-        if (config.Invokables is { Enabled: true })
-        {
-            GenerateJSInvokable(config, arg2.Left.Left.incrementals);
-        }
-    }
-
-    public static void GenerateOutput(SourceProductionContext sdf, Settings config, List<PageRoute> pageRoutes)
+    public static void GenerateOutput(Settings config, List<PageRoute> pageRoutes)
     {
         var source = new SourceStringBuilder();
 
@@ -146,7 +59,7 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
                 SlugName = pageRoute.Name;
             }
 
-            var routeSegments = routeTemplate.Segments.Where(e => e.IsParameter).Select(delegate(TemplateSegment segment)
+            var routeSegments = routeTemplate.Segments.Where(e => e.IsParameter).Select(delegate (TemplateSegment segment)
             {
                 var constraint = segment.Constraints.Any() ? segment.Constraints.FirstOrDefault().GetConstraintType() : null;
 
@@ -247,8 +160,6 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
 
         source.AppendCloseCurlyBracketLine();
     }
-
-
     private static void OutputRouteExtensionMethod(SourceStringBuilder source, string SlugName, string parameterString, RouteTemplate routeTemplate, PageRoute pageRoute, Settings config)
     {
         if (pageRoute.Auth is { RequiresAuthentication: true })
@@ -385,54 +296,6 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
         return policyList;
     }
 
-
-    public static Settings LoadConfig(IEnumerable<AdditionalText> configFiles, string defaultNamespace)
-    {
-        var configFilePath = configFiles.FirstOrDefault();
-
-        if (configFilePath == null)
-        {
-            return null;
-        }
-
-        var filePath = configFilePath.Path;
-        return LoadConfigFromFile(filePath, defaultNamespace);
-    }
-
-    public static Settings LoadConfigFromFile(string filePath, string defaultNamespace)
-    {
-        var jsonString = File.ReadAllText(filePath);
-        var config = JsonSerializer.Deserialize<Settings>(jsonString);
-        var configFileDirectory = Path.GetDirectoryName(filePath);
-
-        if (string.IsNullOrEmpty(config.Namespace))
-        {
-            config.Namespace = defaultNamespace;
-        }
-
-        if (config.OutputToFiles != null && config.OutputToFiles.Any())
-        {
-            config.OutputToFiles = config.OutputToFiles.Select(r =>
-            {
-                var fullPath = Path.Combine(configFileDirectory, r);
-
-                return fullPath;
-            }).ToList();
-        }
-        
-        if (config.Invokables != null && config.Invokables.OutputToFiles.Count > 0)
-        {
-            foreach (var outputFile in config.Invokables.OutputToFiles)
-            {
-                var fullPath = Path.Combine(configFileDirectory, outputFile);
-                var index = config.Invokables.OutputToFiles.IndexOf(outputFile);
-                config.Invokables.OutputToFiles[index] = Path.GetFullPath(fullPath);
-            }
-        }
-
-        return config;
-    }
-    
     public static void GenerateJSInvokable(Settings config, List<(string MethodName, string InvokableName)> invokables)
     {
         if (invokables.Count == 0)
@@ -442,12 +305,12 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
 
         var jsBuilder = new StringBuilder();
         jsBuilder.AppendLine($"const {config.Invokables.JSClassName} = {{");
-    
+
         foreach (var (methodName, invokableName) in invokables)
         {
-            jsBuilder.AppendLine($"{methodName.Replace(".","_")}: \"{invokableName}\", ");
+            jsBuilder.AppendLine($"{methodName.Replace(".", "_")}: \"{invokableName}\", ");
         }
-            
+
         jsBuilder.AppendLine("};");
 
         if (config.Invokables.OutputToFiles.Count > 0)
@@ -458,6 +321,5 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
             }
         }
     }
-    
-    private static bool IsConfigurationFile(AdditionalText text) => text.Path.EndsWith("RazorPageRoutes.json");
+
 }

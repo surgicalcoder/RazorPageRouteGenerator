@@ -34,7 +34,8 @@ public class Settings_JSInvokables
 
 public class Settings_Auth
 {
-    public string Attribute { get; set; }
+    [JsonConverter(typeof(StringOrArrayJsonConverter))]
+    public List<string> Attribute { get; set; }
     public string PolicyTransformer { get; set; }
     public string RolesTransformer { get; set; }
     public string AuthenticationSchemeTransformer { get; set; }

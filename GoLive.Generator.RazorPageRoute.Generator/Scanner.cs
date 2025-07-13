@@ -69,7 +69,7 @@ public static class Scanner
 
         // Built-in AuthorizeAttribute
         var authorizeAttributes = input.Attributes
-            .Where(attr => attr.Name == "Microsoft.AspNetCore.Authorization.AuthorizeAttribute")
+            .Where(attr => attr.Name is "Microsoft.AspNetCore.Authorization.AuthorizeAttribute" or "AuthorizeAttribute" or "Authorize")
             .ToList();
 
         foreach (var attr in authorizeAttributes)
@@ -103,7 +103,7 @@ public static class Scanner
             foreach (var customAuth in settings.Auth)
             {
                 var customAttributes = input.Attributes
-                    .Where(attr => attr.Name == customAuth.Attribute)
+                    .Where(attr => customAuth.Attribute != null && customAuth.Attribute.Contains(attr.Name))
                     .ToList();
 
                 foreach (var attr in customAttributes)

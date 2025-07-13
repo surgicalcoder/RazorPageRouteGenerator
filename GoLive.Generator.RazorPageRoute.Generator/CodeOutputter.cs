@@ -172,7 +172,7 @@ internal static class CodeOutputter
                 if (pageRoute.Auth.CustomAuth is { Count: > 0 })
                 {
                     var authItem = pageRoute.Auth.CustomAuth.FirstOrDefault();
-                    var authSettings = config.Auth.First(e => e.Attribute == authItem.Name);
+                    var authSettings = config.Auth.First(e => e.Attribute != null && e.Attribute.Contains(authItem.Name));
 
                     var policyList = EvaluateCode(authSettings.PolicyTransformer, authItem);
                     var rolesList = EvaluateCode(authSettings.RolesTransformer, authItem);
@@ -288,12 +288,20 @@ internal static class CodeOutputter
         {
             return null;
         }
-        Evaluator policyEvaluator = new(transformer);
-        policyEvaluator.AddUsing("System.Collections.Generic");
-        policyEvaluator["ConstructorParameters"] = authItem.CtorParams;
-        policyEvaluator["NamedParameters"] = authItem.NamedParams;
-        var policyList = policyEvaluator.Eval<List<string>>();
-        return policyList;
+
+        try
+        {
+            Evaluator policyEvaluator = new(transformer);
+            policyEvaluator.AddUsing("System.Collections.Generic");
+            policyEvaluator["ConstructorParameters"] = authItem.CtorParams;
+            policyEvaluator["NamedParameters"] = authItem.NamedParams;
+            var policyList = policyEvaluator.Eval<List<string>>();
+            return policyList;
+        }
+        catch (Exception e)
+        {
+            return [e.ToString()];
+        }
     }
 
     public static void GenerateJSInvokable(Settings config, List<PageRoute> pageRoutes)

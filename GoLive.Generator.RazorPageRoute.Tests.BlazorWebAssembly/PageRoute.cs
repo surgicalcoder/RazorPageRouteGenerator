@@ -1,4 +1,4 @@
-// This file was generated on Sun, 13 Jul 2025 20:37:30 GMT
+// This file was generated on Sun, 13 Jul 2025 22:10:25 GMT
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -54,6 +54,19 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly
             return url;
         }
 
+        public class CustomAuthPage_AuthData : IAuthorizeData
+        {
+            public string Policy { get; set; } = String.Empty;
+            public string Roles { get; set; } = "[Admin], superuser";
+            public string AuthenticationSchemes { get; set; } = String.Empty;
+        }
+
+        /// <summary>
+        /// Page Requires Authentication, Custom Authentication Provider (CustomAuth)
+        /// Custom Authentication ProviderName: CustomAuth
+        /// Custom Auth Constructor Params: [arg0, [Admin]]
+        /// Custom Auth Named Params: 
+        /// </summary>
         public static void CustomAuthPage(this NavigationManager manager, bool forceLoad = false, bool replace = false)
         {
             string url = "/CustomAuthPage";
@@ -66,6 +79,16 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly
             return url;
         }
 
+        public class AuthPage_AuthData : IAuthorizeData
+        {
+            public string Policy { get; set; } = String.Empty;
+            public string Roles { get; set; } = String.Empty;
+            public string AuthenticationSchemes { get; set; } = String.Empty;
+        }
+
+        /// <summary>
+        /// Page Requires Authentication
+        /// </summary>
         public static void AuthPage(this NavigationManager manager, bool forceLoad = false, bool replace = false)
         {
             string url = "/AuthPage";

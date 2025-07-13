@@ -178,7 +178,7 @@ public static class SourceCodeAnalyzer
                         }
                         else
                         {
-                            arguments.Add(arg.GetArgumentValue());
+                            arguments.Add(GetArgumentValue(arg));
                         }
                     }
                 }
@@ -186,12 +186,48 @@ public static class SourceCodeAnalyzer
                 attributes.Add(new AttributeInfo
                 {
                     Name = attribute.Name.GetCleanName(),
-                    Arguments = arguments,
+                    Arguments =  arguments,
                     NamedArguments = namedArguments
                 });
             }
         }
 
         return attributes;
+    }
+
+    private static string GetArgumentValue(AttributeArgumentSyntax arg)
+    {
+        // Handle string literals directly
+        if (arg.Expression is LiteralExpressionSyntax literal && literal.IsKind(SyntaxKind.StringLiteralExpression))
+        {
+            return literal.Token.ValueText;
+        }
+        // Handle array initializers like new[] { "Admin", "User" }
+        if (arg.Expression is ArrayCreationExpressionSyntax arrayCreation)
+        {
+            var initializer = arrayCreation.Initializer;
+            if (initializer != null)
+            {
+                var values = initializer.Expressions
+                    .OfType<LiteralExpressionSyntax>()
+                    .Where(e => e.IsKind(SyntaxKind.StringLiteralExpression))
+                    .Select(e => e.Token.ValueText);
+                return $"[{string.Join(", ", values)}]";
+            }
+        }
+        if (arg.Expression is ImplicitArrayCreationExpressionSyntax implicitArray)
+        {
+            var initializer = implicitArray.Initializer;
+            if (initializer != null)
+            {
+                var values = initializer.Expressions
+                    .OfType<LiteralExpressionSyntax>()
+                    .Where(e => e.IsKind(SyntaxKind.StringLiteralExpression))
+                    .Select(e => e.Token.ValueText);
+                return $"[{string.Join(", ", values)}]";
+            }
+        }
+        // Fallback to ToString
+        return arg.Expression.ToString();
     }
 }

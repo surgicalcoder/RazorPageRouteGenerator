@@ -30,7 +30,7 @@
 		<PackageProjectUrl>https://github.com/surgicalcoder/RazorPageRouteGenerator</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/surgicalcoder/RazorPageRouteGenerator</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
-		<Version>2.1.3-alpha</Version>
+		<Version>2.2.0-alpha</Version>
 		<MeziantouPolyfill_IncludedPolyfills>T:System.Range|T:System.Index|T:System.Diagnostics.CodeAnalysis.NotNullWhenAttribute|T:System.Diagnostics.CodeAnalysis.DoesNotReturnAttribute</MeziantouPolyfill_IncludedPolyfills>
 	</PropertyGroup>
 	<ItemGroup>

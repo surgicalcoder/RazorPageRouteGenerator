@@ -70,7 +70,7 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 new DiagnosticDescriptor("BRD003", "Route discovery error",
-                $"Error during route discovery: {ex.Message}", "BlazorRouteDiscovery",
+                $"Error during route discovery: {ex}", "BlazorRouteDiscovery",
                 DiagnosticSeverity.Error, true), Location.None));
         }
     }
@@ -122,7 +122,7 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
     {
         var generatedFiles = Directory.GetFiles(razorPath, "*.g.cs", SearchOption.AllDirectories);
 
-        List<PageRoute> retr = new();
+        List<PageRoute> retr = [];
 
         foreach (var generatedFile in generatedFiles)
         {

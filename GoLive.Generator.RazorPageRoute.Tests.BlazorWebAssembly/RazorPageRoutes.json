@@ -12,8 +12,11 @@
     },
     "Auth": [
         {
-            "Attribute": "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly.CustomAuth",
-            "RolesTransformer": "        var roles = ConstructorParameters[\"roles\"].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);\r\n\r\n        \/\/ Create a List<string> to store the roles\r\n        var rolesList = new List<string>(roles);\r\n\r\n        \/\/ Add the \"superuser\" role to the list\r\n        rolesList.Add(\"superuser\");\r\n\r\n        \/\/ Return the processed list of roles\r\n        return rolesList;"
+            "Attribute": [
+                "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly.CustomAuth",
+                "CustomAuth"
+            ],
+            "RolesTransformer": "        var roles = ConstructorParameters[\"arg0\"].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);\r\n\r\n        \/\/ Create a List<string> to store the roles\r\n        var rolesList = new List<string>(roles);\r\n\r\n        \/\/ Add the \"superuser\" role to the list\r\n        rolesList.Add(\"superuser\");\r\n\r\n        \/\/ Return the processed list of roles\r\n        return rolesList;"
         }
     ]
 }

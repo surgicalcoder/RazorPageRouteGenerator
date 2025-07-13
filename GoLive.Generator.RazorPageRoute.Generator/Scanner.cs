@@ -270,7 +270,7 @@ public static class Scanner
         return customAttributes ?? [];
     }
 
-    static string? getHighestFolderVersion(string inputFolder, string searchPattern = "net*")
+    public static string? getHighestFolderVersion(string inputFolder, string searchPattern = "net*")
     {
         var versionFolders = Directory.GetDirectories(inputFolder, searchPattern)
             .OrderByDescending(v => Version.Parse(Path.GetFileName(v)[3..]))

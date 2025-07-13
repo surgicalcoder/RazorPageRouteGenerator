@@ -24,14 +24,14 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
 
         var projectDirProvider = context.AnalyzerConfigOptionsProvider.Select((provider, _) =>
         {
-            /*var globalOptions = new Dictionary<string, string>();
+            var globalOptions = new Dictionary<string, string>();
             foreach (var option in provider.GlobalOptions.Keys)
             {
                 if (provider.GlobalOptions.TryGetValue(option, out var value))
                 {
                     globalOptions[option] = value;
                 }
-            }*/
+            }
 
             if (!provider.GlobalOptions.TryGetValue("build_property.projectdir", out var projectDir))
             {
@@ -78,7 +78,7 @@ public class PageRouteIncrementalExperimentalGenerator : IIncrementalGenerator
             }
             using var assembly = AssemblyDefinition.ReadAssembly(new MemoryStream(assemblyData), new ReaderParameters { AssemblyResolver = assemblyResolver });
 
-            var routes = Scanner.ScanForPageRoutesIncremental(assembly, config).CustomDistinctBy(e => e.Route).ToList();
+            List<PageRoute> routes = Scanner.ScanForPageRoutesIncremental(assembly, config).CustomDistinctBy(e => e.Route).ToList();
             var incrementals = Scanner.ScanForInvokables(assembly).ToList();
 
             return (routes, incrementals);

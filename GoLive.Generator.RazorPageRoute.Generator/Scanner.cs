@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using GoLive.Generator.RazorPageRoute.Generator.CodeReader;
 using Mono.Cecil;
 
 namespace GoLive.Generator.RazorPageRoute.Generator;
@@ -85,6 +86,11 @@ public static class Scanner
         return dllFile;
     }
 
+    public static IEnumerable<PageRoute> ScanForPageRoutes(AnalysisResult input, Settings settings)
+    {
+
+    }
+
     public static IEnumerable<PageRoute> ScanForPageRoutesIncremental(AssemblyDefinition input, Settings settings)
     {
         var types = input.MainModule.Types
@@ -97,6 +103,29 @@ public static class Scanner
             yield return pageRoute;
         }
     }
+
+    private static IEnumerable<PageRoute> ToRoute(ClassInfo input, Settings settings)
+    {
+        var routes = input.Attributes
+            .Where(attr => attr.Name == "Microsoft.AspNetCore.Components.RouteAttribute")
+            .SelectMany(attr => attr.Arguments)
+            .Where(route => !string.IsNullOrEmpty(route))
+            .ToList();
+
+        var queryStringParams =
+            input.Fields.Where(e => e.Attributes.Any(f => f.Name == "SupplyParameterFromQuery"))
+                .Select(e => new PageRouteQuerystringParameter(e.Name, e.Type));
+
+        var pageAuth = getPageAuth(input, settings);
+
+        foreach (var route in routes)
+        {
+            yield return new PageRoute(input.Name, route, queryStringParams.ToList(), pageRouteAuth);
+        }
+    }
+
+
+
 
     private static IEnumerable<PageRoute> ToRoute(TypeDefinition input, Settings settings)
     {
@@ -122,6 +151,63 @@ public static class Scanner
         {
             yield return new PageRoute(input.Name, route, querystringParameters, pageRouteAuth);
         }
+    }
+
+    private static PageRouteAuth getPageAuth(ClassInfo input, Settings settings)
+    {
+        var retr = new PageRouteAuth();
+
+        // Built-in AuthorizeAttribute
+        var authorizeAttributes = input.Attributes
+            .Where(attr => attr.Name == "Microsoft.AspNetCore.Authorization.AuthorizeAttribute")
+            .ToList();
+
+        foreach (var attr in authorizeAttributes)
+        {
+            retr.RequiresAuthentication = true;
+
+            foreach (var arg in attr.Arguments)
+            {
+                if (!string.IsNullOrEmpty(arg))
+                {
+                    // Assume argument is a comma-separated string of roles
+                    retr.Roles = arg.Split(',').Select(role => role.Trim()).ToList();
+                }
+            }
+        }
+
+        // Named properties (Policy, AuthenticationSchemes) are not available in AttributeInfo, so skip for ClassInfo
+
+        // Custom attributes from settings.Auth
+        if (settings.Auth != null)
+        {
+            foreach (var customAuth in settings.Auth)
+            {
+                var customAttributes = input.Attributes
+                    .Where(attr => attr.Name == customAuth.Attribute)
+                    .ToList();
+
+                foreach (var attr in customAttributes)
+                {
+                    retr.RequiresAuthentication = true;
+
+                    var ctorArgs = new Dictionary<string, string>();
+                    var namedArgs = new Dictionary<string, string>();
+
+                    // AttributeInfo only has Arguments, treat as constructor args
+                    for (int i = 0; i < attr.Arguments.Count; i++)
+                    {
+                        ctorArgs[$"arg{i}"] = attr.Arguments[i];
+                    }
+
+                    // No named properties in AttributeInfo, so namedArgs stays empty
+                    retr.CustomAuth ??= new List<PageRouteAuthCustomAuth>();
+                    retr.CustomAuth.Add(new PageRouteAuthCustomAuth(attr.Name, ctorArgs, namedArgs));
+                }
+            }
+        }
+
+        return retr;
     }
 
     private static PageRouteAuth getPageRouteAuth(TypeDefinition input, Settings settings)
@@ -190,19 +276,19 @@ public static class Scanner
                 }
 
                 if (namedArg.Name == "AuthenticationSchemes")
-                    {
-                        var schemeArgument = namedArg.Argument.Value;
-                        var schemeConstant = schemeArgument as FieldReference;
+                {
+                    var schemeArgument = namedArg.Argument.Value;
+                    var schemeConstant = schemeArgument as FieldReference;
 
-                        if (schemeConstant != null && schemeConstant.DeclaringType != null)
-                        {
-                            retr.AuthenticationSchemes = new List<string> { $"{schemeConstant.DeclaringType.Name}.{schemeConstant.Name}" };
-                        }
-                        else
-                        {
-                            retr.AuthenticationSchemes = schemeArgument.ToString().Split(',').Select(scheme => scheme.Trim()).ToList();
-                        }
+                    if (schemeConstant != null && schemeConstant.DeclaringType != null)
+                    {
+                        retr.AuthenticationSchemes = new List<string> { $"{schemeConstant.DeclaringType.Name}.{schemeConstant.Name}" };
                     }
+                    else
+                    {
+                        retr.AuthenticationSchemes = schemeArgument.ToString().Split(',').Select(scheme => scheme.Trim()).ToList();
+                    }
+                }
                 
             }
         }

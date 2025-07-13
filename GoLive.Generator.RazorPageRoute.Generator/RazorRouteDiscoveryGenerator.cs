@@ -143,6 +143,12 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
             }
         }
 
+        // Remove duplicates by route
+        retr = retr
+            .GroupBy(r => r.Route)
+            .Select(g => g.First())
+            .ToList();
+
         return retr;
     }
 

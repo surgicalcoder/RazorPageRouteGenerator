@@ -48,10 +48,11 @@ internal static class CodeOutputter
             return;
         }
 
+        List<string> completedAuthData = [];
         foreach (var pageRoute in pageRoutes)
         {
             var routeTemplate = TemplateParser.ParseTemplate(pageRoute.Route);
-
+            
             var SlugName = Slug.Create(pageRoute.Route.Length > 1 ? string.Join(".", routeTemplate.Segments.Where(f => !f.IsParameter).Select(f => f.Value)) : "Home");
 
             if (string.IsNullOrWhiteSpace(SlugName))
@@ -83,6 +84,11 @@ internal static class CodeOutputter
             if (config.OutputExtensionMethod)
             {
                 OutputRouteExtensionMethod(source, SlugName, parameterString, routeTemplate, pageRoute, config);
+                if (!completedAuthData.Contains(SlugName))
+                {
+                    completedAuthData.Add(SlugName);
+                    OutputRouteAuthDataClasses(source, SlugName, pageRoute, config);
+                }
             }
         }
 
@@ -160,7 +166,8 @@ internal static class CodeOutputter
 
         source.AppendCloseCurlyBracketLine();
     }
-    private static void OutputRouteExtensionMethod(SourceStringBuilder source, string SlugName, string parameterString, RouteTemplate routeTemplate, PageRoute pageRoute, Settings config)
+
+    private static void OutputRouteAuthDataClasses(SourceStringBuilder source, string SlugName, PageRoute pageRoute, Settings config)
     {
         if (pageRoute.Auth is { RequiresAuthentication: true })
         {
@@ -191,8 +198,13 @@ internal static class CodeOutputter
 
                 source.AppendCloseCurlyBracketLine();
             }
+        }
+    }
 
-
+    private static void OutputRouteExtensionMethod(SourceStringBuilder source, string SlugName, string parameterString, RouteTemplate routeTemplate, PageRoute pageRoute, Settings config)
+    {
+        if (pageRoute.Auth is { RequiresAuthentication: true })
+        {
             source.AppendLine("/// <summary>");
             source.AppendLine($"/// Page Requires Authentication{(pageRoute.Auth.CustomAuth != null ? ", Custom Authentication Provider (CustomAuth)" : "")}");
 

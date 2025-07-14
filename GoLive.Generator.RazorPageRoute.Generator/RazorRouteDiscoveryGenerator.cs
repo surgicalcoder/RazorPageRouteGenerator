@@ -60,7 +60,15 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
             var defaultNamespace = GetMSBuildProperty(context, "rootnamespace") ?? "DefaultNamespace";
             var settings = LoadConfig(configFiles, defaultNamespace);
 
-            var discoveredRoutes = DiscoverRoutesFromGeneratedFiles(razorPath, settings);
+            // Get the first syntax tree (or choose one relevant to your scenario)
+            var syntaxTree = context.Compilation.SyntaxTrees.FirstOrDefault();
+            SemanticModel semanticModel = null;
+            if (syntaxTree != null)
+            {
+                semanticModel = context.Compilation.GetSemanticModel(syntaxTree);
+            }
+            var constValues = GetAllConstValues(context.Compilation);
+            var discoveredRoutes = DiscoverRoutesFromGeneratedFiles(razorPath, settings, semanticModel);
 
             GenerateRouteCode(discoveredRoutes, settings);
             GenerateInvokablesCode(settings, discoveredRoutes);
@@ -118,7 +126,7 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
             ? value : null;
     }
 
-    private List<PageRoute> DiscoverRoutesFromGeneratedFiles(string razorPath, Settings settings)
+    private List<PageRoute> DiscoverRoutesFromGeneratedFiles(string razorPath, Settings settings, SemanticModel semanticModel)
     {
         var generatedFiles = Directory.GetFiles(razorPath, "*.g.cs", SearchOption.AllDirectories);
 
@@ -126,7 +134,7 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
 
         foreach (var generatedFile in generatedFiles)
         {
-            var analysisResult = SourceCodeAnalyzer.AnalyzeSourceFile(generatedFile);
+            var analysisResult = SourceCodeAnalyzer.AnalyzeSourceFile(generatedFile, semanticModel);
 
             if (analysisResult.Classes.Count == 0)
             {
@@ -197,5 +205,39 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
         }
 
         return config;
+    }
+
+    private Dictionary<string, object> GetAllConstValues(Compilation compilation)
+    {
+        var constValues = new Dictionary<string, object>();
+
+        foreach (var syntaxTree in compilation.SyntaxTrees)
+        {
+            var semanticModel = compilation.GetSemanticModel(syntaxTree);
+            var root = syntaxTree.GetRoot();
+
+            // Find all field declarations
+            var fieldDeclarations = root.DescendantNodes()
+                .OfType<Microsoft.CodeAnalysis.CSharp.Syntax.FieldDeclarationSyntax>();
+
+            foreach (var fieldDecl in fieldDeclarations)
+            {
+                // Check if the field is const
+                if (fieldDecl.Modifiers.Any(m => m.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.ConstKeyword)))
+                {
+                    foreach (var variable in fieldDecl.Declaration.Variables)
+                    {
+                        var symbol = semanticModel.GetDeclaredSymbol(variable) as IFieldSymbol;
+                        if (symbol != null && symbol.HasConstantValue)
+                        {
+                            // Use fully qualified name for uniqueness
+                            constValues[symbol.ToDisplayString()] = symbol.ConstantValue;
+                        }
+                    }
+                }
+            }
+        }
+
+        return constValues;
     }
 }

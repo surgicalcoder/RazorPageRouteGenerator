@@ -83,8 +83,11 @@ public static class Scanner
                     retr.Roles = arg.Split(',').Select(role => role.Trim()).ToList();
                 }
             }
-
-            // Handle named properties
+            
+            if (attr.NamedArguments.TryGetValue("Roles", out var additionalRoles))
+            {
+                 retr.Roles = additionalRoles.Split(',').Select(p => p.Trim()).ToList();
+            }
             if (attr.NamedArguments.TryGetValue("Policy", out var policy))
             {
                 retr.Policies = policy.Split(',').Select(p => p.Trim()).ToList();

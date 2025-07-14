@@ -6,9 +6,10 @@ public class AnalysisResult
 {
     public override string ToString()
     {
-        return $"{nameof(Namespaces)}: {Namespaces.Count}, {nameof(Classes)}: {Classes.Count}, {nameof(Interfaces)}: {Interfaces.Count}, {nameof(Enums)}: {Enums.Count}";
+        return $"{nameof(Namespaces)}: {Namespaces.Count}, {nameof(Classes)}: {Classes.Count}, {nameof(Interfaces)}: {Interfaces.Count}, {nameof(Enums)}: {Enums.Count}, {nameof(ReferencedNamespaces)}: {ReferencedNamespaces.Count}";
     }
 
+    public List<string> ReferencedNamespaces { get; set; } = new();
     public List<NamespaceInfo> Namespaces { get; set; } = new();
     public List<ClassInfo> Classes { get; set; } = new();
     public List<InterfaceInfo> Interfaces { get; set; } = new();

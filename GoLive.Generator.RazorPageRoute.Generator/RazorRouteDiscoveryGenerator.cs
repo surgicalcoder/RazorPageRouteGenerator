@@ -13,6 +13,8 @@ namespace GoLive.Generator.RazorPageRoute.Generator;
 [Generator]
 public class BlazorRouteDiscoveryGenerator : ISourceGenerator
 {
+    private static Compilation _compilation;
+
     public void Initialize(GeneratorInitializationContext context)
     {
         // No initialization required
@@ -28,8 +30,8 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
             {
                 context.ReportDiagnostic(Diagnostic.Create(
                     new DiagnosticDescriptor("BRD001", "Missing BaseIntermediateOutputPath",
-                    "BaseIntermediateOutputPath MSBuild property not found", "BlazorRouteDiscovery",
-                    DiagnosticSeverity.Warning, true), Location.None));
+                        "BaseIntermediateOutputPath MSBuild property not found", "BlazorRouteDiscovery",
+                        DiagnosticSeverity.Warning, true), Location.None));
                 return;
             }
 
@@ -55,20 +57,14 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
             {
                 razorPath = generatedFolder;
             }
-
+            _compilation = context.Compilation;
             var configFiles = context.AdditionalFiles.Where(IsConfigurationFile);
             var defaultNamespace = GetMSBuildProperty(context, "rootnamespace") ?? "DefaultNamespace";
             var settings = LoadConfig(configFiles, defaultNamespace);
 
-            // Get the first syntax tree (or choose one relevant to your scenario)
-            var syntaxTree = context.Compilation.SyntaxTrees.FirstOrDefault();
-            SemanticModel semanticModel = null;
-            if (syntaxTree != null)
-            {
-                semanticModel = context.Compilation.GetSemanticModel(syntaxTree);
-            }
-            var constValues = GetAllConstValues(context.Compilation);
-            var discoveredRoutes = DiscoverRoutesFromGeneratedFiles(razorPath, settings, semanticModel);
+           
+
+            var discoveredRoutes = DiscoverRoutesFromGeneratedFiles(razorPath, settings);
 
             GenerateRouteCode(discoveredRoutes, settings);
             GenerateInvokablesCode(settings, discoveredRoutes);
@@ -78,14 +74,14 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 new DiagnosticDescriptor("BRD003", "Route discovery error",
-                $"Error during route discovery: {ex}", "BlazorRouteDiscovery",
-                DiagnosticSeverity.Error, true), Location.None));
+                    $"Error during route discovery: {ex}", "BlazorRouteDiscovery",
+                    DiagnosticSeverity.Error, true), Location.None));
         }
     }
 
     private void GenerateInvokablesCode(Settings config, List<PageRoute> discoveredRoutes)
     {
-        var invokables = discoveredRoutes.Where(r=>r.Invokables != null && r.Invokables.Any()).SelectMany(r => r.Invokables).ToList();
+        var invokables = discoveredRoutes.Where(r => r.Invokables != null && r.Invokables.Any()).SelectMany(r => r.Invokables).ToList();
         if (invokables == null || invokables.Count == 0)
         {
             return;
@@ -123,10 +119,11 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
     private string GetMSBuildProperty(GeneratorExecutionContext context, string propertyName)
     {
         return context.AnalyzerConfigOptions.GlobalOptions.TryGetValue($"build_property.{propertyName}", out var value)
-            ? value : null;
+            ? value
+            : null;
     }
 
-    private List<PageRoute> DiscoverRoutesFromGeneratedFiles(string razorPath, Settings settings, SemanticModel semanticModel)
+    private List<PageRoute> DiscoverRoutesFromGeneratedFiles(string razorPath, Settings settings)
     {
         var generatedFiles = Directory.GetFiles(razorPath, "*.g.cs", SearchOption.AllDirectories);
 
@@ -134,7 +131,7 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
 
         foreach (var generatedFile in generatedFiles)
         {
-            var analysisResult = SourceCodeAnalyzer.AnalyzeSourceFile(generatedFile, semanticModel);
+            var analysisResult = SourceCodeAnalyzer.AnalyzeSourceFile(generatedFile, ResolveConstValueFunc);
 
             if (analysisResult.Classes.Count == 0)
             {
@@ -161,6 +158,7 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
     }
 
     private static bool IsConfigurationFile(AdditionalText text) => text.Path.EndsWith("RazorPageRoutes.json");
+
     public static Settings LoadConfig(IEnumerable<AdditionalText> configFiles, string defaultNamespace)
     {
         var configFilePath = configFiles.FirstOrDefault();
@@ -173,6 +171,7 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
         var filePath = configFilePath.Path;
         return LoadConfigFromFile(filePath, defaultNamespace);
     }
+
     public static Settings LoadConfigFromFile(string filePath, string defaultNamespace)
     {
         var jsonString = File.ReadAllText(filePath);
@@ -207,37 +206,88 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
         return config;
     }
 
-    private Dictionary<string, object> GetAllConstValues(Compilation compilation)
-    {
-        var constValues = new Dictionary<string, object>();
-
-        foreach (var syntaxTree in compilation.SyntaxTrees)
+        public Func<string, List<string>, string> ResolveConstValueFunc = (constName, namespaceImports) =>
         {
-            var semanticModel = compilation.GetSemanticModel(syntaxTree);
-            var root = syntaxTree.GetRoot();
-
-            // Find all field declarations
-            var fieldDeclarations = root.DescendantNodes()
-                .OfType<Microsoft.CodeAnalysis.CSharp.Syntax.FieldDeclarationSyntax>();
-
-            foreach (var fieldDecl in fieldDeclarations)
+            // Try to resolve in current compilation
+            foreach (var syntaxTree in _compilation.SyntaxTrees)
             {
-                // Check if the field is const
-                if (fieldDecl.Modifiers.Any(m => m.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.ConstKeyword)))
+                var semanticModel = _compilation.GetSemanticModel(syntaxTree);
+                var root = syntaxTree.GetRoot();
+
+                var fieldDeclarations = root.DescendantNodes()
+                    .OfType<Microsoft.CodeAnalysis.CSharp.Syntax.FieldDeclarationSyntax>();
+
+                foreach (var fieldDecl in fieldDeclarations)
                 {
-                    foreach (var variable in fieldDecl.Declaration.Variables)
+                    if (fieldDecl.Modifiers.Any(m => m.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.ConstKeyword)))
                     {
-                        var symbol = semanticModel.GetDeclaredSymbol(variable) as IFieldSymbol;
-                        if (symbol != null && symbol.HasConstantValue)
+                        foreach (var variable in fieldDecl.Declaration.Variables)
                         {
-                            // Use fully qualified name for uniqueness
-                            constValues[symbol.ToDisplayString()] = symbol.ConstantValue;
+                            var symbol = semanticModel.GetDeclaredSymbol(variable) as IFieldSymbol;
+                            if (symbol != null && symbol.HasConstantValue)
+                            {
+                                // Check for match by name and namespace
+                                if (symbol.Name == constName || symbol.ToDisplayString() == constName)
+                                {
+                                    if (namespaceImports == null || namespaceImports.Count == 0 ||
+                                        namespaceImports.Contains(symbol.ContainingNamespace.ToDisplayString()))
+                                    {
+                                        return symbol.ConstantValue.ToString();
+                                    }
+                                }
+
+                                // Enhanced matching: check if ToDisplayString() ends with any namespace import + "." + constName
+                                if (namespaceImports != null && namespaceImports.Count > 0)
+                                {
+                                    foreach (var nsImport in namespaceImports)
+                                    {
+                                        var expectedDisplay = $"{nsImport}.{constName}";
+                                        if (symbol.ToDisplayString().EndsWith(expectedDisplay))
+                                        {
+                                            return symbol.ConstantValue.ToString();
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
-        }
 
-        return constValues;
-    }
+            // Try to resolve in referenced assemblies
+            var referencedAssemblies = _compilation.References
+                .Select(r => _compilation.GetAssemblyOrModuleSymbol(r))
+                .OfType<IAssemblySymbol>();
+
+            foreach (var assembly in referencedAssemblies)
+            {
+                foreach (var namespaceImport in namespaceImports ?? Enumerable.Empty<string>())
+                {
+                    var ns = assembly.GlobalNamespace.GetNamespaceMembers()
+                        .FirstOrDefault(n => n.ToDisplayString() == namespaceImport);
+
+                    if (ns == null)
+                        continue;
+
+                    foreach (var type in ns.GetTypeMembers())
+                    {
+                        foreach (var member in type.GetMembers())
+                        {
+                            if (member is IFieldSymbol fieldSymbol && fieldSymbol.IsConst)
+                            {
+                                if (fieldSymbol.Name == constName || fieldSymbol.ToDisplayString() == constName)
+                                {
+                                    return fieldSymbol.ConstantValue.ToString();
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+
+            return null;
+        };
+
+
 }

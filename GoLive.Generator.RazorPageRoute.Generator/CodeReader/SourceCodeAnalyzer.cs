@@ -10,7 +10,7 @@ namespace GoLive.Generator.RazorPageRoute.Generator.CodeReader;
 
 public static class SourceCodeAnalyzer
 {
-    public static AnalysisResult AnalyzeSourceFile(string filePath, SemanticModel semanticModel)
+    public static AnalysisResult AnalyzeSourceFile(string filePath, Func<string, List<string>, string> ResolveConstValueFunc)
     {
         if (!File.Exists(filePath))
         {
@@ -18,21 +18,16 @@ public static class SourceCodeAnalyzer
         }
 
         var sourceCode = File.ReadAllText(filePath);
-        return AnalyzeSourceCode(sourceCode, semanticModel);
+        return AnalyzeSourceCode(sourceCode, ResolveConstValueFunc);
     }
 
-    public static AnalysisResult AnalyzeSourceCode(string sourceCode, SemanticModel semanticModel)
+    public static AnalysisResult AnalyzeSourceCode(string sourceCode, Func<string, List<string>, string> ResolveConstValueFunc)
     {
         var syntaxTree = CSharpSyntaxTree.ParseText(sourceCode);
         var root = syntaxTree.GetCompilationUnitRoot();
 
         var result = new AnalysisResult();
 
-        // Extract referenced namespaces
-        var usingDirectives = root.Usings.Select(u => u.Name?.ToString()).ToList();
-        result.ReferencedNamespaces.AddRange(usingDirectives);
-
-        // Extract namespaces
         var namespaces = root.DescendantNodes().OfType<NamespaceDeclarationSyntax>();
         foreach (var ns in namespaces)
         {
@@ -42,6 +37,39 @@ public static class SourceCodeAnalyzer
                 FullName = ns.Name.ToString()
             });
         }
+
+        var usingDirectives = root.Usings.Select(u => u.Name?.ToString()).ToList();
+
+        // Also collect using directives inside namespace declarations
+        var namespaceUsings = root.DescendantNodes()
+            .OfType<NamespaceDeclarationSyntax>()
+            .SelectMany(ns => ns.Usings.Select(u => u.Name?.ToString()))
+            .ToList();
+
+        // Also collect using directives inside file-scoped namespace declarations (.NET 6+)
+        var fileScopedNamespaceUsings = root.DescendantNodes()
+            .OfType<FileScopedNamespaceDeclarationSyntax>()
+            .SelectMany(ns => ns.Usings.Select(u => u.Name?.ToString()))
+            .ToList();
+
+        // Combine all using directives, remove nulls and duplicates
+        var allUsings = usingDirectives
+            .Concat(namespaceUsings)
+            .Concat(fileScopedNamespaceUsings)
+            .Where(u => !string.IsNullOrWhiteSpace(u))
+            .Distinct()
+            .ToList();
+
+        result.ReferencedNamespaces.AddRange(allUsings);
+        result.ReferencedNamespaces.AddRange(result.Namespaces.Select(r=>r.FullName));
+
+        // Remove "global::" prefix and duplicates (case-insensitive)
+        result.ReferencedNamespaces = result.ReferencedNamespaces
+            .Select(ns => ns.StartsWith("global::", StringComparison.Ordinal) ? ns["global::".Length..] : ns)
+            .Where(ns => !string.IsNullOrWhiteSpace(ns))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
 
         // Extract file-scoped namespaces (.NET 6+)
         var fileScopedNamespaces = root.DescendantNodes().OfType<FileScopedNamespaceDeclarationSyntax>();
@@ -63,7 +91,7 @@ public static class SourceCodeAnalyzer
                 Name = cls.Identifier.ValueText,
                 Modifiers = cls.Modifiers.ToString(),
                 BaseTypes = cls.BaseList?.Types.Select(t => t.Type.ToString()).ToList() ?? new List<string>(),
-                Attributes = ExtractAttributes(cls.AttributeLists, semanticModel)
+                Attributes = ExtractAttributes(cls.AttributeLists, ResolveConstValueFunc, result.ReferencedNamespaces)
             };
 
             // Extract properties
@@ -75,7 +103,7 @@ public static class SourceCodeAnalyzer
                     Name = prop.Identifier.ValueText,
                     Type = prop.Type.ToString(),
                     Modifiers = prop.Modifiers.ToString(),
-                    Attributes = ExtractAttributes(prop.AttributeLists, semanticModel),
+                    Attributes = ExtractAttributes(prop.AttributeLists, ResolveConstValueFunc, result.ReferencedNamespaces),
                     HasGetter = prop.AccessorList?.Accessors.Any(a => a.IsKind(SyntaxKind.GetAccessorDeclaration)) ?? false,
                     HasSetter = prop.AccessorList?.Accessors.Any(a => a.IsKind(SyntaxKind.SetAccessorDeclaration)) ?? false
                 });
@@ -92,7 +120,7 @@ public static class SourceCodeAnalyzer
                         Name = variable.Identifier.ValueText,
                         Type = field.Declaration.Type.ToString(),
                         Modifiers = field.Modifiers.ToString(),
-                        Attributes = ExtractAttributes(field.AttributeLists, semanticModel),
+                        Attributes = ExtractAttributes(field.AttributeLists, ResolveConstValueFunc, result.ReferencedNamespaces),
                         HasInitializer = variable.Initializer != null
                     });
                 }
@@ -107,7 +135,7 @@ public static class SourceCodeAnalyzer
                     Name = method.Identifier.ValueText,
                     ReturnType = method.ReturnType.ToString(),
                     Modifiers = method.Modifiers.ToString(),
-                    Attributes = ExtractAttributes(method.AttributeLists, semanticModel),
+                    Attributes = ExtractAttributes(method.AttributeLists, ResolveConstValueFunc, result.ReferencedNamespaces),
                     Parameters = method.ParameterList.Parameters.Select(p => new ParameterInfo
                     {
                         Name = p.Identifier.ValueText,
@@ -129,7 +157,7 @@ public static class SourceCodeAnalyzer
                 Name = iface.Identifier.ValueText,
                 Modifiers = iface.Modifiers.ToString(),
                 BaseTypes = iface.BaseList?.Types.Select(t => t.Type.ToString()).ToList() ?? new List<string>(),
-                Attributes = ExtractAttributes(iface.AttributeLists, semanticModel)
+                Attributes = ExtractAttributes(iface.AttributeLists, ResolveConstValueFunc, result.ReferencedNamespaces)
             });
         }
 
@@ -141,7 +169,7 @@ public static class SourceCodeAnalyzer
             {
                 Name = enumDecl.Identifier.ValueText.GetCleanName(),
                 Modifiers = enumDecl.Modifiers.ToString(),
-                Attributes = ExtractAttributes(enumDecl.AttributeLists, semanticModel),
+                Attributes = ExtractAttributes(enumDecl.AttributeLists, ResolveConstValueFunc, result.ReferencedNamespaces),
                 Members = enumDecl.Members.Select(m => m.Identifier.ValueText).ToList()
             });
         }
@@ -156,7 +184,7 @@ public static class SourceCodeAnalyzer
     // - Replace: arguments.Add(arg.ToString());
     // - With: if (arg.Expression is LiteralExpressionSyntax literal && literal.IsKind(SyntaxKind.StringLiteralExpression)) { arguments.Add(literal.Token.ValueText); } else { arguments.Add(arg.ToString()); }
 
-    private static List<AttributeInfo> ExtractAttributes(SyntaxList<AttributeListSyntax> attributeLists, SemanticModel semanticModel)
+    private static List<AttributeInfo> ExtractAttributes(SyntaxList<AttributeListSyntax> attributeLists, Func<string, List<string>, string> ResolveConstValueFunc, List<string> references)
     {
         var attributes = new List<AttributeInfo>();
 
@@ -173,16 +201,16 @@ public static class SourceCodeAnalyzer
                     {
                         if (arg.NameEquals != null)
                         {
-                            namedArguments[arg.NameEquals.Name.Identifier.ValueText] = GetArgumentValue(arg, semanticModel);
+                            namedArguments[arg.NameEquals.Name.Identifier.ValueText] = GetArgumentValue(arg, ResolveConstValueFunc, references);
                         }
                         else if (arg.NameColon != null)
                         {
                             // Named argument with colon syntax: name: value
-                            namedArguments[arg.NameColon.Name.Identifier.ValueText] = GetArgumentValue(arg, semanticModel);
+                            namedArguments[arg.NameColon.Name.Identifier.ValueText] = GetArgumentValue(arg, ResolveConstValueFunc, references);
                         }
                         else
                         {
-                            arguments.Add(GetArgumentValue(arg, semanticModel));
+                            arguments.Add(GetArgumentValue(arg, ResolveConstValueFunc, references));
                         }
                     }
                 }
@@ -200,20 +228,22 @@ public static class SourceCodeAnalyzer
     }
 
     // Add this helper method to resolve constant values using a SemanticModel
-        private static string ResolveConstantValue(SemanticModel semanticModel, ExpressionSyntax expr)
+    private static string ResolveConstantValue(ExpressionSyntax expr, Func<string, List<string>, string> ResolveConstValueFunc, List<string> references)
+    {
+        var res = ResolveConstValueFunc.Invoke(expr.ToString(), references);
+
+        if (!string.IsNullOrEmpty(res))
         {
-            var symbolInfo = semanticModel.GetSymbolInfo(expr);
-            if (symbolInfo.Symbol is IFieldSymbol { HasConstantValue: true } fieldSymbol)
-            {
-                return fieldSymbol.ConstantValue?.ToString();
-            }
-            // For properties, try to get the constant value via ConstantValue property on the syntax (not available for IPropertySymbol)
-            // .NET Standard 2.0 Roslyn does not support constant value for properties, so fallback to ToString()
+            return res;
+        }
+        else
+        {
             return expr.ToString();
         }
+    }
 
     // Update GetArgumentValue to accept a SemanticModel and use ResolveConstantValue
-    public static string GetArgumentValue(AttributeArgumentSyntax arg, SemanticModel semanticModel)
+    public static string GetArgumentValue(AttributeArgumentSyntax arg, Func<string, List<string>, string> ResolveConstValueFunc, List<string> references)
     {
         // Handle string literals directly
         if (arg.Expression is LiteralExpressionSyntax literal && literal.IsKind(SyntaxKind.StringLiteralExpression))
@@ -246,6 +276,6 @@ public static class SourceCodeAnalyzer
             }
         }
         // Try to resolve constant value
-        return ResolveConstantValue(semanticModel, arg.Expression);
+        return ResolveConstantValue(arg.Expression, ResolveConstValueFunc, references);
     }
 }

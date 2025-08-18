@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis;
 
 namespace GoLive.Generator.RazorPageRoute.Generator;
 
-internal static class CodeOutputter
+public static class CodeOutputter
 {
 
     public static void GenerateOutput(Settings config, List<PageRoute> pageRoutes)

@@ -13,6 +13,7 @@ namespace GoLive.Generator.RazorPageRoute.Generator;
 [Generator]
 public class BlazorRouteDiscoveryGenerator : ISourceGenerator
 {
+    private const string diagnosticCategory = "BlazorRouteDiscovery";
     private static Compilation _compilation;
 
     public void Initialize(GeneratorInitializationContext context)
@@ -22,6 +23,7 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
 
     public void Execute(GeneratorExecutionContext context)
     {
+        
         try
         {
             // Get BaseIntermediateOutputPath from MSBuild properties
@@ -30,26 +32,30 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
             {
                 context.ReportDiagnostic(Diagnostic.Create(
                     new DiagnosticDescriptor("BRD001", "Missing BaseIntermediateOutputPath",
-                        "BaseIntermediateOutputPath MSBuild property not found", "BlazorRouteDiscovery",
-                        DiagnosticSeverity.Warning, true), Location.None));
+                        "BaseIntermediateOutputPath MSBuild property not found", diagnosticCategory,
+                        DiagnosticSeverity.Error, true), Location.None));
                 return;
             }
 
             var generatedFolder = Path.Combine(GetMSBuildProperty(context, "projectdir"), GetMSBuildProperty(context, "CompilerGeneratedFilesOutputPath"));
+
+            context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("BRD004", title: $"Using path {generatedFolder}", messageFormat: $"Using path {generatedFolder}", category: diagnosticCategory, DiagnosticSeverity.Info, isEnabledByDefault:true), location: Location.None));
 
             var highestFolder = Scanner.getHighestFolderVersion(Path.Combine(baseIntermediateOutputPath, "Debug"));
             string razorPath;
 
             if (generatedFolder == null || !Directory.Exists(generatedFolder))
             {
+                context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("BRD005", title: $"Generated folder is null or does not exist", messageFormat: $"Generated folder is null or does not exist", category: diagnosticCategory, DiagnosticSeverity.Warning, isEnabledByDefault: true), location: Location.None));
+
                 razorPath = Path.Combine(highestFolder, "Razor");
 
                 if (!Directory.Exists(razorPath))
                 {
                     context.ReportDiagnostic(Diagnostic.Create(
                         new DiagnosticDescriptor("BRD002", "Razor directory not found",
-                            $"Razor directory not found at: {razorPath}", "BlazorRouteDiscovery",
-                            DiagnosticSeverity.Warning, true), Location.None));
+                            $"Razor directory not found at: {razorPath}", diagnosticCategory,
+                            DiagnosticSeverity.Error, true), Location.None));
                     return;
                 }
             }
@@ -62,8 +68,6 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
             var defaultNamespace = GetMSBuildProperty(context, "rootnamespace") ?? "DefaultNamespace";
             var settings = LoadConfig(configFiles, defaultNamespace);
 
-           
-
             var discoveredRoutes = DiscoverRoutesFromGeneratedFiles(razorPath, settings);
 
             GenerateRouteCode(discoveredRoutes, settings);
@@ -73,13 +77,13 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
         catch (Exception ex)
         {
             context.ReportDiagnostic(Diagnostic.Create(
-                new DiagnosticDescriptor("BRD003", "Route discovery error",
-                    $"Error during route discovery: {ex}", "BlazorRouteDiscovery",
-                    DiagnosticSeverity.Error, true), Location.None));
+                new DiagnosticDescriptor("BRD006", "Route discovery error - sources may not have generated",
+                    $"Error during route discovery: {ex.ToString()} Stack Trace: {ex.StackTrace}", diagnosticCategory,
+                    DiagnosticSeverity.Warning, true), Location.None));
         }
     }
 
-    private void GenerateInvokablesCode(Settings config, List<PageRoute> discoveredRoutes)
+    public void GenerateInvokablesCode(Settings config, List<PageRoute> discoveredRoutes)
     {
         var invokables = discoveredRoutes.Where(r => r.Invokables != null && r.Invokables.Any()).SelectMany(r => r.Invokables).ToList();
         if (invokables == null || invokables.Count == 0)
@@ -106,7 +110,7 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
         }
     }
 
-    private void GenerateRouteCode(List<PageRoute> Routes, Settings settings)
+    public void GenerateRouteCode(List<PageRoute> Routes, Settings settings)
     {
         CodeOutputter.GenerateOutput(settings, Routes);
 
@@ -187,19 +191,18 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
         {
             config.OutputToFiles = config.OutputToFiles.Select(r =>
             {
-                var fullPath = Path.Combine(configFileDirectory, r);
-
+                var fullPath = Path.GetFullPath(Path.Combine(configFileDirectory, r));
                 return fullPath;
             }).ToList();
         }
 
         if (config.Invokables != null && config.Invokables.OutputToFiles.Count > 0)
         {
-            foreach (var outputFile in config.Invokables.OutputToFiles)
+            for (int i = 0; i < config.Invokables.OutputToFiles.Count; i++)
             {
-                var fullPath = Path.Combine(configFileDirectory, outputFile);
-                var index = config.Invokables.OutputToFiles.IndexOf(outputFile);
-                config.Invokables.OutputToFiles[index] = Path.GetFullPath(fullPath);
+                var outputFile = config.Invokables.OutputToFiles[i];
+                var fullPath = Path.GetFullPath(Path.Combine(configFileDirectory, outputFile));
+                config.Invokables.OutputToFiles[i] = fullPath;
             }
         }
 
@@ -288,6 +291,5 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
 
             return null;
         };
-
 
 }

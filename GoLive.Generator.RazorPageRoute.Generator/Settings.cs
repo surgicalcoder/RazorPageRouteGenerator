@@ -9,7 +9,7 @@ public class Settings
     public string ClassName { get; set; }
 
     [JsonConverter(typeof(StringOrArrayJsonConverter))]
-    public List<string> OutputToFiles { get; set; } = new();
+    public List<string> OutputToFiles { get; set; } = [];
 
     public string DebugOutputFile { get; set; }
 
@@ -21,6 +21,9 @@ public class Settings
 
     public List<Settings_Auth> Auth { get; set; } = [];
     public bool OutputIAuthorizeData { get; set; }
+    
+    [JsonConverter(typeof(StringOrArrayJsonConverter))]
+    public List<string> JsonRepresentation { get; set; } = [];
 }
 
 public class Settings_JSInvokables
@@ -28,7 +31,8 @@ public class Settings_JSInvokables
     public bool Enabled { get; set; }
     
     [JsonConverter(typeof(StringOrArrayJsonConverter))]
-    public List<string> OutputToFiles { get; set; } = new();
+    public List<string> OutputToFiles { get; set; } = [];
+    
     public string JSClassName { get; set; }
 }
 

@@ -107,6 +107,18 @@ public static class CodeOutputter
                 }
             }
         }
+
+        if (config.JsonRepresentation.Count > 0)
+        {
+            var jsonOutput = System.Text.Json.JsonSerializer.Serialize(pageRoutes, new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+            foreach (var s in config.JsonRepresentation)
+            {
+                File.WriteAllText(s, jsonOutput);
+            }
+        }
     }
 
     private static void OutputRouteStringMethod(SourceStringBuilder source, string SlugName, string parameterString, RouteTemplate routeTemplate, PageRoute pageRoute)

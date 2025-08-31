@@ -195,6 +195,15 @@ public class BlazorRouteDiscoveryGenerator : ISourceGenerator
                 return fullPath;
             }).ToList();
         }
+        
+        if (config.JsonRepresentation != null && config.JsonRepresentation.Any())
+        {
+            config.JsonRepresentation = config.JsonRepresentation.Select(r =>
+            {
+                var fullPath = Path.GetFullPath(Path.Combine(configFileDirectory, r));
+                return fullPath;
+            }).ToList();
+        }
 
         if (config.Invokables != null && config.Invokables.OutputToFiles.Count > 0)
         {

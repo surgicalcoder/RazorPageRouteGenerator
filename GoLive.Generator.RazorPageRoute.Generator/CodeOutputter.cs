@@ -53,7 +53,7 @@ public static class CodeOutputter
         {
             var routeTemplate = TemplateParser.ParseTemplate(pageRoute.Route);
             
-            var SlugName = Slug.Create(pageRoute.Route.Length > 1 ? string.Join(".", routeTemplate.Segments.Where(f => !f.IsParameter).Select(f => f.Value)) : "Home");
+            var SlugName = pageRoute.Route.Length > 1 ? Slug.Create(string.Join(".", routeTemplate.Segments.Where(f => !f.IsParameter).Select(f => f.Value))) : "Home";
 
             if (string.IsNullOrWhiteSpace(SlugName))
             {

@@ -10,8 +10,6 @@
     <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <CompilerVisibleProperty Include="CompilerGeneratedFilesOutputPath" />
-    <CompilerVisibleProperty Include="EmitCompilerGeneratedFiles" />
     <CompilerVisibleProperty Include="BaseIntermediateOutputPath" />
   </ItemGroup>
   <ItemGroup>

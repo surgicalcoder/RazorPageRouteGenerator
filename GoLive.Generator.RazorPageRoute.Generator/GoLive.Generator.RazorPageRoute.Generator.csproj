@@ -40,7 +40,6 @@
     <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.11.0" PrivateAssets="all" />
-		<PackageReference Include="Mono.Cecil" Version="0.11.6" GeneratePathProperty="true" PrivateAssets="all" Pack="true" />
 		<PackageReference Include="System.Buffers" Version="4.6.0" GeneratePathProperty="true" PrivateAssets="all" Pack="true" />
 		<PackageReference Include="System.Numerics.Vectors" Version="4.6.0" GeneratePathProperty="true" PrivateAssets="all" Pack="true" />
 		<PackageReference Include="System.Text.Encodings.Web" Version="9.0.0" GeneratePathProperty="true" PrivateAssets="all" Pack="true" />
@@ -57,7 +56,6 @@
 			<TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Text_Json)\lib\netstandard2.0\System.Text.Json.dll" IncludeRuntimeDependency="false" />
 			<TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Text_Encodings_Web)\lib\netstandard2.0\System.Text.Encodings.Web.dll" IncludeRuntimeDependency="false" />
 			<TargetPathWithTargetPlatformMoniker Include="$(PKGMicrosoft_Bcl_AsyncInterfaces)\lib\netstandard2.0\Microsoft.Bcl.AsyncInterfaces.dll" IncludeRuntimeDependency="false" />
-			<TargetPathWithTargetPlatformMoniker Include="$(PKGMono_Cecil)\lib\netstandard2.0\Mono.Cecil.dll" IncludeRuntimeDependency="false" />
 			<TargetPathWithTargetPlatformMoniker Include="$(PKGGoLive_ExpressionEvaluator)\lib\netstandard2.0\GoLive.ExpressionEvaluator.dll" IncludeRuntimeDependency="false" />
 			<TargetPathWithTargetPlatformMoniker Include="@(ResolvedCompileFileDefinitions)" IncludeRuntimeDependency="false" />
 		</ItemGroup>

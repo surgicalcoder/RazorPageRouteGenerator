@@ -4,301 +4,511 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
-using GoLive.Generator.RazorPageRoute.Generator.CodeReader;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace GoLive.Generator.RazorPageRoute.Generator;
 
-
 [Generator]
-public class BlazorRouteDiscoveryGenerator : ISourceGenerator
+public class BlazorRouteDiscoveryGenerator : IIncrementalGenerator
 {
     private const string diagnosticCategory = "BlazorRouteDiscovery";
-    private static Compilation _compilation;
 
-    public void Initialize(GeneratorInitializationContext context)
+    public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        // No initialization required
-    }
+        var configProvider = context.AdditionalTextsProvider
+            .Where(static t => t.Path.EndsWith("RazorPageRoutes.json"))
+            .Select(static (text, ct) => (Path: text.Path, Content: text.GetText(ct)?.ToString()))
+            .Where(static t => t.Content != null);
 
-    public void Execute(GeneratorExecutionContext context)
-    {
-        
-        try
-        {
-            // Get BaseIntermediateOutputPath from MSBuild properties
-            var baseIntermediateOutputPath = GetMSBuildProperty(context, "BaseIntermediateOutputPath");
-            if (string.IsNullOrEmpty(baseIntermediateOutputPath))
+        var optionsProvider = context.AnalyzerConfigOptionsProvider
+            .Select(static (options, ct) => (
+                BaseIntermediateOutputPath: GetBuildProperty(options, "BaseIntermediateOutputPath"),
+                RootNamespace: GetBuildProperty(options, "rootnamespace") ?? "DefaultNamespace"
+            ));
+
+        var combined = configProvider
+            .Combine(optionsProvider)
+            .Select(static (pair, ct) =>
             {
-                context.ReportDiagnostic(Diagnostic.Create(
-                    new DiagnosticDescriptor("BRD001", "Missing BaseIntermediateOutputPath",
-                        "BaseIntermediateOutputPath MSBuild property not found", diagnosticCategory,
-                        DiagnosticSeverity.Error, true), Location.None));
+                var ((configPath, configContent), (baseIntermediateOutputPath, rootNamespace)) = pair;
+                var settings = ParseSettings(configPath, configContent, rootNamespace);
+                return (Settings: settings, BaseIntermediateOutputPath: baseIntermediateOutputPath);
+            })
+            .Where(static t => t.Settings != null)
+            .Combine(context.CompilationProvider)
+            .Select(static (pair, ct) =>
+            {
+                var ((settings, baseIntermediateOutputPath), compilation) = pair;
+
+                var razorOutputPath = Path.Combine(
+                    baseIntermediateOutputPath,
+                    "Generated",
+                    "Microsoft.CodeAnalysis.Razor.Compiler",
+                    "Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator");
+
+                var routes = DiscoverRoutes(razorOutputPath, settings, compilation);
+
+                return new GenerationResult(settings, routes, razorOutputPath);
+            });
+
+        context.RegisterSourceOutput(combined, (spc, result) =>
+        {
+            if (!Directory.Exists(result.RazorOutputPath))
+            {
+                spc.ReportDiagnostic(Diagnostic.Create(
+                    new DiagnosticDescriptor("BRD002", "Razor generated files not found",
+                        $"Razor generated files directory not found at: {result.RazorOutputPath}. "
+                        + "Ensure EmitCompilerGeneratedFiles is enabled in the project. "
+                        + "Routes will be generated on the next build.",
+                        diagnosticCategory, DiagnosticSeverity.Warning, true),
+                    Location.None));
                 return;
             }
 
-            var generatedFolder = Path.Combine(GetMSBuildProperty(context, "projectdir"), GetMSBuildProperty(context, "CompilerGeneratedFilesOutputPath"));
+            var source = BuildSource(result.Settings, result.Routes);
+            if (string.IsNullOrWhiteSpace(source))
+                return;
 
-            context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("BRD004", title: $"Using path {generatedFolder}", messageFormat: $"Using path {generatedFolder}", category: diagnosticCategory, DiagnosticSeverity.Info, isEnabledByDefault:true), location: Location.None));
-
-            var highestFolder = Scanner.getHighestFolderVersion(Path.Combine(baseIntermediateOutputPath, "Debug"));
-            string razorPath;
-
-            if (generatedFolder == null || !Directory.Exists(generatedFolder))
+            foreach (var outputPath in result.Settings.OutputToFiles)
             {
-                context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("BRD005", title: $"Generated folder is null or does not exist", messageFormat: $"Generated folder is null or does not exist", category: diagnosticCategory, DiagnosticSeverity.Warning, isEnabledByDefault: true), location: Location.None));
+                File.WriteAllText(outputPath, source);
+            }
 
-                razorPath = Path.Combine(highestFolder, "Razor");
-
-                if (!Directory.Exists(razorPath))
+            if (result.Settings.JsonRepresentation.Count > 0)
+            {
+                var json = JsonSerializer.Serialize(result.Routes, new JsonSerializerOptions { WriteIndented = true });
+                foreach (var jsonPath in result.Settings.JsonRepresentation)
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(
-                        new DiagnosticDescriptor("BRD002", "Razor directory not found",
-                            $"Razor directory not found at: {razorPath}", diagnosticCategory,
-                            DiagnosticSeverity.Error, true), Location.None));
-                    return;
+                    File.WriteAllText(jsonPath, json);
                 }
             }
-            else
-            {
-                razorPath = generatedFolder;
-            }
-            _compilation = context.Compilation;
-            var configFiles = context.AdditionalFiles.Where(IsConfigurationFile);
-            var defaultNamespace = GetMSBuildProperty(context, "rootnamespace") ?? "DefaultNamespace";
-            var settings = LoadConfig(configFiles, defaultNamespace);
-
-            var discoveredRoutes = DiscoverRoutesFromGeneratedFiles(razorPath, settings);
-
-            GenerateRouteCode(discoveredRoutes, settings);
-            GenerateInvokablesCode(settings, discoveredRoutes);
-
-        }
-        catch (Exception ex)
-        {
-            context.ReportDiagnostic(Diagnostic.Create(
-                new DiagnosticDescriptor("BRD006", "Route discovery error - sources may not have generated",
-                    $"Error during route discovery: {ex.ToString()} Stack Trace: {ex.StackTrace}", diagnosticCategory,
-                    DiagnosticSeverity.Warning, true), Location.None));
-        }
+        });
     }
 
-    public void GenerateInvokablesCode(Settings config, List<PageRoute> discoveredRoutes)
+    private static string GetBuildProperty(AnalyzerConfigOptionsProvider options, string propertyName)
     {
-        var invokables = discoveredRoutes.Where(r => r.Invokables != null && r.Invokables.Any()).SelectMany(r => r.Invokables).ToList();
-        if (invokables == null || invokables.Count == 0)
-        {
-            return;
-        }
-
-        var jsBuilder = new StringBuilder();
-        jsBuilder.AppendLine($"const {config.Invokables.JSClassName} = {{");
-
-        foreach (var invokable in invokables)
-        {
-            jsBuilder.AppendLine($"{invokable.MethodName.Replace(".", "_")}: \"{invokable.InvokableName}\", ");
-        }
-
-        jsBuilder.AppendLine("};");
-
-        if (config.Invokables.OutputToFiles != null && config.Invokables.OutputToFiles.Count > 0)
-        {
-            foreach (var outputPath in config.Invokables.OutputToFiles)
-            {
-                File.WriteAllText(outputPath, jsBuilder.ToString());
-            }
-        }
+        options.GlobalOptions.TryGetValue($"build_property.{propertyName}", out var value);
+        return value;
     }
 
-    public void GenerateRouteCode(List<PageRoute> Routes, Settings settings)
+    public static Settings ParseSettings(string configPath, string configContent, string rootNamespace)
     {
-        CodeOutputter.GenerateOutput(settings, Routes);
-
-        if (settings.Invokables.Enabled)
-        {
-            CodeOutputter.GenerateJSInvokable(settings, Routes);
-        }
-    }
-
-    private string GetMSBuildProperty(GeneratorExecutionContext context, string propertyName)
-    {
-        return context.AnalyzerConfigOptions.GlobalOptions.TryGetValue($"build_property.{propertyName}", out var value)
-            ? value
-            : null;
-    }
-
-    private List<PageRoute> DiscoverRoutesFromGeneratedFiles(string razorPath, Settings settings)
-    {
-        var generatedFiles = Directory.GetFiles(razorPath, "*.g.cs", SearchOption.AllDirectories);
-
-        List<PageRoute> retr = [];
-
-        foreach (var generatedFile in generatedFiles)
-        {
-            var analysisResult = SourceCodeAnalyzer.AnalyzeSourceFile(generatedFile, ResolveConstValueFunc);
-
-            if (analysisResult.Classes.Count == 0)
-            {
-                continue; // Skip files with no classes
-            }
-
-            foreach (var @class in analysisResult.Classes)
-            {
-                var scanForPageRoutes = Scanner.ScanForPageRoutes(@class, settings);
-                if (scanForPageRoutes != null && scanForPageRoutes.Any())
-                {
-                    retr.AddRange(scanForPageRoutes);
-                }
-            }
-        }
-
-        // Remove duplicates by route
-        retr = retr
-            .GroupBy(r => r.Route)
-            .Select(g => g.First())
-            .ToList();
-
-        return retr;
-    }
-
-    private static bool IsConfigurationFile(AdditionalText text) => text.Path.EndsWith("RazorPageRoutes.json");
-
-    public static Settings LoadConfig(IEnumerable<AdditionalText> configFiles, string defaultNamespace)
-    {
-        var configFilePath = configFiles.FirstOrDefault();
-
-        if (configFilePath == null)
-        {
-            return null;
-        }
-
-        var filePath = configFilePath.Path;
-        return LoadConfigFromFile(filePath, defaultNamespace);
-    }
-
-    public static Settings LoadConfigFromFile(string filePath, string defaultNamespace)
-    {
-        var jsonString = File.ReadAllText(filePath);
-        var config = JsonSerializer.Deserialize<Settings>(jsonString);
-        var configFileDirectory = Path.GetDirectoryName(filePath);
+        var config = JsonSerializer.Deserialize<Settings>(configContent);
+        if (config == null) return null;
 
         if (string.IsNullOrEmpty(config.Namespace))
         {
-            config.Namespace = defaultNamespace;
+            config.Namespace = rootNamespace;
         }
 
-        if (config.OutputToFiles != null && config.OutputToFiles.Any())
+        var configFileDirectory = Path.GetDirectoryName(configPath);
+
+        if (config.OutputToFiles != null && config.OutputToFiles.Count > 0)
         {
             config.OutputToFiles = config.OutputToFiles.Select(r =>
-            {
-                var fullPath = Path.GetFullPath(Path.Combine(configFileDirectory, r));
-                return fullPath;
-            }).ToList();
+                Path.GetFullPath(Path.Combine(configFileDirectory, r))).ToList();
         }
-        
-        if (config.JsonRepresentation != null && config.JsonRepresentation.Any())
+
+        if (config.JsonRepresentation != null && config.JsonRepresentation.Count > 0)
         {
             config.JsonRepresentation = config.JsonRepresentation.Select(r =>
-            {
-                var fullPath = Path.GetFullPath(Path.Combine(configFileDirectory, r));
-                return fullPath;
-            }).ToList();
+                Path.GetFullPath(Path.Combine(configFileDirectory, r))).ToList();
         }
 
         if (config.Invokables != null && config.Invokables.OutputToFiles.Count > 0)
         {
             for (int i = 0; i < config.Invokables.OutputToFiles.Count; i++)
             {
-                var outputFile = config.Invokables.OutputToFiles[i];
-                var fullPath = Path.GetFullPath(Path.Combine(configFileDirectory, outputFile));
-                config.Invokables.OutputToFiles[i] = fullPath;
+                config.Invokables.OutputToFiles[i] =
+                    Path.GetFullPath(Path.Combine(configFileDirectory, config.Invokables.OutputToFiles[i]));
             }
         }
 
         return config;
     }
 
-        public Func<string, List<string>, string> ResolveConstValueFunc = (constName, namespaceImports) =>
+    private static List<PageRoute> DiscoverRoutes(string razorPath, Settings settings, Compilation compilation)
+    {
+        if (!Directory.Exists(razorPath))
         {
-            // Try to resolve in current compilation
-            foreach (var syntaxTree in _compilation.SyntaxTrees)
+            return [];
+        }
+
+        var generatedFiles = Directory.GetFiles(razorPath, "*.g.cs", SearchOption.AllDirectories);
+        List<PageRoute> retr = [];
+
+        foreach (var generatedFile in generatedFiles)
+        {
+            var tree = CSharpSyntaxTree.ParseText(File.ReadAllText(generatedFile));
+            var root = tree.GetRoot();
+
+            foreach (var cls in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
             {
-                var semanticModel = _compilation.GetSemanticModel(syntaxTree);
-                var root = syntaxTree.GetRoot();
+                var routes = RouteExtractor.ExtractRoutes(cls);
+                if (routes.Count == 0) continue;
 
-                var fieldDeclarations = root.DescendantNodes()
-                    .OfType<Microsoft.CodeAnalysis.CSharp.Syntax.FieldDeclarationSyntax>();
+                var queryParams = RouteExtractor.ExtractQueryParams(cls);
+                var auth = RouteExtractor.ExtractAuth(cls, settings,
+                    (name, usings) => ResolveConst(name, usings, compilation));
+                var invokables = RouteExtractor.ExtractInvokables(cls);
 
-                foreach (var fieldDecl in fieldDeclarations)
+                foreach (var route in routes)
                 {
-                    if (fieldDecl.Modifiers.Any(m => m.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.ConstKeyword)))
-                    {
-                        foreach (var variable in fieldDecl.Declaration.Variables)
-                        {
-                            var symbol = semanticModel.GetDeclaredSymbol(variable) as IFieldSymbol;
-                            if (symbol != null && symbol.HasConstantValue)
-                            {
-                                // Check for match by name and namespace
-                                if (symbol.Name == constName || symbol.ToDisplayString() == constName)
-                                {
-                                    if (namespaceImports == null || namespaceImports.Count == 0 ||
-                                        namespaceImports.Contains(symbol.ContainingNamespace.ToDisplayString()))
-                                    {
-                                        return symbol.ConstantValue.ToString();
-                                    }
-                                }
-
-                                // Enhanced matching: check if ToDisplayString() ends with any namespace import + "." + constName
-                                if (namespaceImports != null && namespaceImports.Count > 0)
-                                {
-                                    foreach (var nsImport in namespaceImports)
-                                    {
-                                        var expectedDisplay = $"{nsImport}.{constName}";
-                                        if (symbol.ToDisplayString().EndsWith(expectedDisplay))
-                                        {
-                                            return symbol.ConstantValue.ToString();
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    retr.Add(new PageRoute(cls.Identifier.Text, route, queryParams, auth, invokables));
                 }
             }
+        }
 
-            // Try to resolve in referenced assemblies
-            var referencedAssemblies = _compilation.References
-                .Select(r => _compilation.GetAssemblyOrModuleSymbol(r))
-                .OfType<IAssemblySymbol>();
+        retr = retr.GroupBy(r => r.Route).Select(g => g.First()).ToList();
+        return retr;
+    }
 
-            foreach (var assembly in referencedAssemblies)
+    private static string ResolveConst(string constName, List<string> namespaceImports, Compilation compilation)
+    {
+        foreach (var syntaxTree in compilation.SyntaxTrees)
+        {
+            var semanticModel = compilation.GetSemanticModel(syntaxTree);
+            var root = syntaxTree.GetRoot();
+
+            foreach (var fieldDecl in root.DescendantNodes().OfType<FieldDeclarationSyntax>())
             {
-                foreach (var namespaceImport in namespaceImports ?? Enumerable.Empty<string>())
-                {
-                    var ns = assembly.GlobalNamespace.GetNamespaceMembers()
-                        .FirstOrDefault(n => n.ToDisplayString() == namespaceImport);
+                if (!fieldDecl.Modifiers.Any(m => m.IsKind(SyntaxKind.ConstKeyword)))
+                    continue;
 
-                    if (ns == null)
+                foreach (var variable in fieldDecl.Declaration.Variables)
+                {
+                    var symbol = semanticModel.GetDeclaredSymbol(variable) as IFieldSymbol;
+                    if (symbol == null || !symbol.HasConstantValue)
                         continue;
 
-                    foreach (var type in ns.GetTypeMembers())
+                    if (symbol.Name == constName || symbol.ToDisplayString() == constName)
                     {
-                        foreach (var member in type.GetMembers())
+                        if (namespaceImports == null || namespaceImports.Count == 0 ||
+                            namespaceImports.Contains(symbol.ContainingNamespace.ToDisplayString()))
                         {
-                            if (member is IFieldSymbol fieldSymbol && fieldSymbol.IsConst)
+                            return symbol.ConstantValue.ToString();
+                        }
+                    }
+
+                    if (namespaceImports != null)
+                    {
+                        foreach (var nsImport in namespaceImports)
+                        {
+                            if (symbol.ToDisplayString().EndsWith($"{nsImport}.{constName}"))
                             {
-                                if (fieldSymbol.Name == constName || fieldSymbol.ToDisplayString() == constName)
-                                {
-                                    return fieldSymbol.ConstantValue.ToString();
-                                }
+                                return symbol.ConstantValue.ToString();
                             }
                         }
                     }
                 }
-
             }
+        }
 
+        foreach (var assembly in compilation.References
+                     .Select(r => compilation.GetAssemblyOrModuleSymbol(r))
+                     .OfType<IAssemblySymbol>())
+        {
+            foreach (var nsImport in namespaceImports ?? [])
+            {
+                var ns = assembly.GlobalNamespace.GetNamespaceMembers()
+                    .FirstOrDefault(n => n.ToDisplayString() == nsImport);
+                if (ns == null) continue;
+
+                foreach (var type in ns.GetTypeMembers())
+                {
+                    foreach (var member in type.GetMembers())
+                    {
+                        if (member is IFieldSymbol fs && fs.IsConst &&
+                            (fs.Name == constName || fs.ToDisplayString() == constName))
+                        {
+                            return fs.ConstantValue.ToString();
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static string BuildSource(Settings settings, List<PageRoute> routes)
+    {
+        var source = new SourceStringBuilder();
+
+        if (settings.OutputLastCreatedTime)
+        {
+            source.AppendLine($"// This file was generated on {DateTime.Now:R}");
+        }
+
+        source.AppendLine("using System;");
+        source.AppendLine("using System.Net.Http;");
+        source.AppendLine("using System.Threading.Tasks;");
+        source.AppendLine("using System.Net.Http.Json;");
+        source.AppendLine("using System.Collections.Generic;");
+
+        if (settings.OutputIAuthorizeData)
+        {
+            source.AppendLine("using Microsoft.AspNetCore.Authorization;");
+        }
+
+        if (settings.OutputIAuthorizeData || settings.OutputExtensionMethod)
+        {
+            source.AppendLine("using Microsoft.AspNetCore.Components;");
+        }
+
+        source.AppendLine($"namespace {settings.Namespace}");
+        source.AppendOpenCurlyBracketLine();
+        source.AppendLine($"public static partial class {settings.ClassName}");
+        source.AppendOpenCurlyBracketLine();
+
+        if (routes.Count == 0)
+        {
+            return source.ToString();
+        }
+
+        List<string> completedAuthData = [];
+        foreach (var pageRoute in routes)
+        {
+            AppendRoute(source, pageRoute, settings, completedAuthData);
+        }
+
+        source.AppendCloseCurlyBracketLine();
+        source.AppendCloseCurlyBracketLine();
+
+        return source.ToString();
+    }
+
+    private static void AppendRoute(SourceStringBuilder source, PageRoute pageRoute, Settings settings, List<string> completedAuthData)
+    {
+        var routeTemplate = Routing.TemplateParser.ParseTemplate(pageRoute.Route);
+
+        var slugName = pageRoute.Route.Length > 1
+            ? Slug.Create(string.Join(".", routeTemplate.Segments.Where(f => !f.IsParameter).Select(f => f.Value)))
+            : "Home";
+
+        if (string.IsNullOrWhiteSpace(slugName))
+        {
+            slugName = pageRoute.Name;
+        }
+
+        var routeSegments = routeTemplate.Segments
+            .Where(e => e.IsParameter)
+            .Select(segment =>
+            {
+                var constraint = segment.Constraints.Any()
+                    ? segment.Constraints.FirstOrDefault().GetConstraintType()
+                    : null;
+
+                if (constraint == null)
+                    return $"string {segment.Value}";
+
+                return segment.IsOptional
+                    ? $"{constraint.FullName}? {segment.Value}"
+                    : $"{constraint.FullName} {segment.Value}";
+            }).ToList();
+
+        if (pageRoute.QueryString is { Count: > 0 })
+        {
+            routeSegments.AddRange(pageRoute.QueryString
+                .Select(prqp => $"{prqp.Type} {prqp.Name} = default"));
+        }
+
+        var parameterString = string.Join(", ", routeSegments);
+
+        AppendRouteMethod(source, slugName, parameterString, routeTemplate, pageRoute);
+
+        if (settings.OutputExtensionMethod)
+        {
+            AppendExtensionMethod(source, slugName, parameterString, routeTemplate, pageRoute, settings);
+            if (!completedAuthData.Contains(slugName))
+            {
+                completedAuthData.Add(slugName);
+                AppendAuthDataClass(source, slugName, pageRoute, settings);
+            }
+        }
+    }
+
+    private static void AppendRouteMethod(SourceStringBuilder source, string slugName, string parameterString,
+        Routing.RouteTemplate routeTemplate, PageRoute pageRoute)
+    {
+        source.AppendLine($"public static string {slugName} ({parameterString})");
+        source.AppendOpenCurlyBracketLine();
+
+        if (routeTemplate.Segments.Any(e => e.IsParameter))
+        {
+            source.AppendIndent();
+            source.Append("string url = $\"", false);
+            foreach (var seg in routeTemplate.Segments)
+            {
+                source.Append(seg.IsParameter ? $"/{{{seg.Value}.ToString()}}" : $"/{seg.Value}", false);
+            }
+            source.Append("\";\n", false);
+        }
+        else
+        {
+            source.AppendLine($"string url = \"{pageRoute.Route}\";");
+        }
+
+        if (pageRoute.QueryString is { Count: > 0 })
+        {
+            source.AppendLine("Dictionary<string, string> queryString=new();");
+            foreach (var prqp in pageRoute.QueryString)
+            {
+                if (prqp.Type == "System.String" || prqp.Type.Equals("string", StringComparison.OrdinalIgnoreCase))
+                {
+                    source.AppendLine($"if (!string.IsNullOrWhiteSpace({prqp.Name})) ");
+                }
+                else
+                {
+                    source.AppendLine($"if ({prqp.Name} != default) ");
+                }
+                source.AppendOpenCurlyBracketLine();
+                source.AppendLine($"queryString.Add(\"{prqp.Name}\", {prqp.Name}.ToString());");
+                source.AppendCloseCurlyBracketLine();
+            }
+            source.AppendLine("");
+            source.AppendLine("url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);");
+        }
+
+        source.AppendLine("return url;");
+        source.AppendCloseCurlyBracketLine();
+    }
+
+    private static void AppendExtensionMethod(SourceStringBuilder source, string slugName, string parameterString,
+        Routing.RouteTemplate routeTemplate, PageRoute pageRoute, Settings settings)
+    {
+        if (pageRoute.Auth is { RequiresAuthentication: true })
+        {
+            source.AppendLine("/// <summary>");
+            source.AppendLine($"/// Page Requires Authentication{(pageRoute.Auth.CustomAuth != null ? ", Custom Authentication Provider (CustomAuth)" : "")}");
+            if (pageRoute.Auth.Roles is { Count: > 0 })
+                source.AppendLine($"/// Roles: {string.Join(", ", pageRoute.Auth.Roles)}");
+            if (pageRoute.Auth.Policies is { Count: > 0 })
+                source.AppendLine($"/// Policies: {string.Join(", ", pageRoute.Auth.Policies)}");
+            if (pageRoute.Auth.CustomAuth != null)
+            {
+                foreach (var ca in pageRoute.Auth.CustomAuth)
+                {
+                    source.AppendLine($"/// Custom Authentication ProviderName: {ca.Name}");
+                    source.AppendLine($"/// Custom Auth Constructor Params: {string.Join(", ", ca.CtorParams)}");
+                    source.AppendLine($"/// Custom Auth Named Params: {string.Join(", ", ca.NamedParams)}");
+                }
+            }
+            source.AppendLine("/// </summary>");
+        }
+
+        if (string.IsNullOrWhiteSpace(parameterString))
+        {
+            source.AppendLine($"public static void {slugName} (this NavigationManager manager, bool forceLoad = false, bool replace=false)");
+        }
+        else
+        {
+            source.AppendLine($"public static void {slugName} (this NavigationManager manager, {parameterString}, bool forceLoad = false, bool replace=false)");
+        }
+
+        source.AppendOpenCurlyBracketLine();
+
+        if (routeTemplate.Segments.Any(e => e.IsParameter))
+        {
+            source.AppendIndent();
+            source.Append("string url = $\"", false);
+            foreach (var seg in routeTemplate.Segments)
+            {
+                source.Append(seg.IsParameter ? $"/{{{seg.Value}.ToString()}}" : $"/{seg.Value}", false);
+            }
+            source.Append("\";\n", false);
+        }
+        else
+        {
+            source.AppendLine($"string url = \"{pageRoute.Route}\";");
+        }
+
+        if (pageRoute.QueryString is { Count: > 0 })
+        {
+            source.AppendLine("Dictionary<string, string> queryString=new();");
+            foreach (var prqp in pageRoute.QueryString)
+            {
+                if (prqp.Type == "System.String" || prqp.Type.Equals("string", StringComparison.OrdinalIgnoreCase))
+                {
+                    source.AppendLine($"if (!string.IsNullOrWhiteSpace({prqp.Name})) ");
+                }
+                else
+                {
+                    source.AppendLine($"if ({prqp.Name} != default) ");
+                }
+                source.AppendOpenCurlyBracketLine();
+                source.AppendLine($"queryString.Add(\"{prqp.Name}\", {prqp.Name}.ToString());");
+                source.AppendCloseCurlyBracketLine();
+            }
+            source.AppendLine("");
+            source.AppendLine("url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, queryString);");
+        }
+
+        source.AppendLine("manager.NavigateTo(url, forceLoad, replace);");
+        source.AppendCloseCurlyBracketLine();
+    }
+
+    private static void AppendAuthDataClass(SourceStringBuilder source, string slugName, PageRoute pageRoute, Settings settings)
+    {
+        if (pageRoute.Auth is not { RequiresAuthentication: true } || !settings.OutputIAuthorizeData)
+            return;
+
+        source.AppendLine($"public class {slugName}_AuthData : IAuthorizeData");
+        source.AppendOpenCurlyBracketLine();
+
+        if (pageRoute.Auth.CustomAuth is { Count: > 0 })
+        {
+            var authItem = pageRoute.Auth.CustomAuth.FirstOrDefault();
+            var authCfg = settings.Auth.FirstOrDefault(a =>
+                a.Attribute != null && a.Attribute.Contains(authItem.Name));
+
+            if (authCfg != null)
+            {
+                var policyList = EvaluateCode(authCfg.PolicyTransformer, authItem);
+                var rolesList = EvaluateCode(authCfg.RolesTransformer, authItem);
+                var authSchemesList = EvaluateCode(authCfg.AuthenticationSchemeTransformer, authItem);
+
+                source.AppendLine($"public string Policy {{ get; set; }} = {(policyList?.Count > 0 ? $"\"{string.Join(", ", policyList.Select(QuoteLiteral))}\"" : "String.Empty")}; ");
+                source.AppendLine($"public string Roles {{ get; set; }} = {(rolesList?.Count > 0 ? $"\"{string.Join(", ", rolesList.Select(QuoteLiteral))}\"" : "String.Empty")}; ");
+                source.AppendLine($"public string AuthenticationSchemes {{ get; set; }} = {(authSchemesList?.Count > 0 ? $"\"{string.Join(", ", authSchemesList.Select(QuoteLiteral))}\"" : "String.Empty")}; ");
+            }
+        }
+        else
+        {
+            source.AppendLine($"public string Policy {{ get; set; }} = {(pageRoute.Auth.Policies?.Count > 0 ? $"\"{string.Join(",", pageRoute.Auth.Policies)}\"" : "String.Empty")};");
+            source.AppendLine($"public string Roles {{ get; set; }} = {(pageRoute.Auth.Roles?.Count > 0 ? $"\"{string.Join(",", pageRoute.Auth.Roles)}\"" : "String.Empty")}; ");
+            source.AppendLine($"public string AuthenticationSchemes {{ get; set; }} = {(pageRoute.Auth.AuthenticationSchemes?.Count > 0 ? $"\"{string.Join(", ", pageRoute.Auth.AuthenticationSchemes)}\"" : "String.Empty")}; ");
+        }
+
+        source.AppendCloseCurlyBracketLine();
+    }
+
+    private static List<string> EvaluateCode(string transformer, PageRouteAuthCustomAuth authItem)
+    {
+        if (string.IsNullOrWhiteSpace(transformer))
             return null;
-        };
 
+        try
+        {
+            var evaluator = new Data.Eval.Evaluator(transformer);
+            evaluator.AddUsing("System.Collections.Generic");
+            evaluator["ConstructorParameters"] = authItem.CtorParams;
+            evaluator["NamedParameters"] = authItem.NamedParams;
+            return evaluator.Eval<List<string>>();
+        }
+        catch (Exception e)
+        {
+            return [e.ToString()];
+        }
+    }
+
+    private static string QuoteLiteral(string s)
+    {
+        return s.Replace("\\", "\\\\").Replace("\"", "\\\"");
+    }
 }
+
+public record struct GenerationResult(Settings Settings, List<PageRoute> Routes, string RazorOutputPath);

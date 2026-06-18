@@ -1,9 +1,10 @@
-// This file was generated on Sun, 08 Dec 2024 20:43:14 GMT
+// This file was generated on Thu, 18 Jun 2026 08:24:53 GMT
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Net.Http.Json;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 
 namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly3

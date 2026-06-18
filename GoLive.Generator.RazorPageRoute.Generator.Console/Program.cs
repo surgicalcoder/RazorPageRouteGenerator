@@ -1,7 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using GoLive.Generator.RazorPageRoute.Generator;
-using GoLive.Generator.RazorPageRoute.Generator.CodeReader;
-
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 if (args.Length < 1)
 {
@@ -12,7 +12,7 @@ if (args.Length < 1)
 var settingsFile = args[0];
 Console.WriteLine($"Running RPRG for settings: {settingsFile}");
 
-var settings = BlazorRouteDiscoveryGenerator.LoadConfigFromFile(settingsFile, null);
+var settings = BlazorRouteDiscoveryGenerator.ParseSettings(settingsFile, File.ReadAllText(settingsFile), null);
 if (settings == null)
 {
     Console.WriteLine("Failed to load settings file.");
@@ -34,7 +34,7 @@ if (!Directory.Exists(razorPath))
 
 Console.WriteLine($"Using Razor generated files directory: {razorPath}");
 
-var generatedFiles = Directory.GetFiles(razorPath, "*.cs", SearchOption.AllDirectories);
+var generatedFiles = Directory.GetFiles(razorPath, "*.g.cs", SearchOption.AllDirectories);
 var allRoutes = new List<PageRoute>();
 var allInvokables = new List<Invokable>();
 
@@ -42,18 +42,27 @@ foreach (var generatedFile in generatedFiles)
 {
     try
     {
-        var analysisResult = SourceCodeAnalyzer.AnalyzeSourceFile(generatedFile, (constName, nsImports) => null);
-        foreach (var @class in analysisResult.Classes)
+        var tree = CSharpSyntaxTree.ParseText(File.ReadAllText(generatedFile));
+        var root = tree.GetRoot();
+
+        foreach (var cls in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
         {
-            var routes = Scanner.ScanForPageRoutes(@class, settings);
-            if (routes != null && routes.Any())
+            var routes = RouteExtractor.ExtractRoutes(cls);
+            if (routes.Count > 0)
             {
-                allRoutes.AddRange(routes);
-            }
-            var invokables = Scanner.ScanForInvokables(@class);
-            if (invokables != null && invokables.Any())
-            {
-                allInvokables.AddRange(invokables);
+                var queryParams = RouteExtractor.ExtractQueryParams(cls);
+                var auth = RouteExtractor.ExtractAuth(cls, settings, (name, _) => null);
+                var invokables = RouteExtractor.ExtractInvokables(cls);
+
+                foreach (var route in routes)
+                {
+                    allRoutes.Add(new PageRoute(cls.Identifier.Text, route, queryParams, auth, invokables));
+                }
+
+                if (invokables.Count > 0)
+                {
+                    allInvokables.AddRange(invokables);
+                }
             }
         }
     }

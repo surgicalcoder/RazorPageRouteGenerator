@@ -1,0 +1,22 @@
+@page "/profile"
+@page "/profile/{id:int}"
+
+<h3>Profile</h3>
+
+<p>Name: @Name</p>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string Name { get; set; }
+
+    [SupplyParameterFromQuery]
+    public int Age { get; set; }
+
+    [JSInvokable("saveProfile")]
+    public async Task Save()
+    {
+        await Task.CompletedTask;
+    }
+
+    private int count = 0;
+}

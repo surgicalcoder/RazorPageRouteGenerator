@@ -1,90 +1,74 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<Import Project="GoLive.Generator.RazorPageRoute.Generator.props" />
-	<PropertyGroup>
-		<TargetFramework>netstandard2.0</TargetFramework>
+    <Import Project="GoLive.Generator.RazorPageRoute.Generator.props" />
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
         <LangVersion>13</LangVersion>
-        <PackOnBuild>true</PackOnBuild>
-        <PackFolder>analyzers\cs</PackFolder>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
         <IsRoslynComponent>true</IsRoslynComponent>
-        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
-        <IncludeBuildOutput>true</IncludeBuildOutput>
-        <DevelopmentDependency>true</DevelopmentDependency>
-		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
-        <PackageId>GoLive.Generator.RazorPageRoute</PackageId>
-        <Authors>SurgicalCoder</Authors>
-        <Company>N/A</Company>
-        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Description>Generates strongly typed methods that return full URL for Razor and Blazor pages.</Description>
-        <Copyright>Copyright 2023 - 2025 - SurgicalCoder</Copyright>
-        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <PublishRepositoryUrl>true</PublishRepositoryUrl>
-        <GenerateRepositoryUrlAttribute>true</GenerateRepositoryUrlAttribute>
-        <PackOnBuild>true</PackOnBuild>
-        <IsRoslynComponent>true</IsRoslynComponent>
-        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
         <IncludeBuildOutput>false</IncludeBuildOutput>
         <DevelopmentDependency>true</DevelopmentDependency>
-		<PackageProjectUrl>https://github.com/surgicalcoder/RazorPageRouteGenerator</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/surgicalcoder/RazorPageRouteGenerator</RepositoryUrl>
-		<RepositoryType>git</RepositoryType>
-		<Version>2.2.5-alpha</Version>
-		<MeziantouPolyfill_IncludedPolyfills>T:System.Range|T:System.Index|T:System.Diagnostics.CodeAnalysis.NotNullWhenAttribute|T:System.Diagnostics.CodeAnalysis.DoesNotReturnAttribute</MeziantouPolyfill_IncludedPolyfills>
-	</PropertyGroup>
-	<ItemGroup>
-		<PackageReference Include="GoLive.ExpressionEvaluator" Version="1.0.2" GeneratePathProperty="true" PrivateAssets="all" Pack="true" />
-		<PackageReference Include="Meziantou.Polyfill" Version="1.0.42">
-    <PrivateAssets>all</PrivateAssets>
-    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.11.0" PrivateAssets="all" />
-		<PackageReference Include="System.Buffers" Version="4.6.0" GeneratePathProperty="true" PrivateAssets="all" Pack="true" />
-		<PackageReference Include="System.Numerics.Vectors" Version="4.6.0" GeneratePathProperty="true" PrivateAssets="all" Pack="true" />
-		<PackageReference Include="System.Text.Encodings.Web" Version="9.0.0" GeneratePathProperty="true" PrivateAssets="all" Pack="true" />
-		<PackageReference Include="System.Text.Json" Version="9.0.0" GeneratePathProperty="true" PrivateAssets="all" Pack="true" />
-		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.0" GeneratePathProperty="true" PrivateAssets="all" Pack="true" />
-	</ItemGroup>
-	<PropertyGroup>
-		<GetTargetPathDependsOn>$(GetTargetPathDependsOn);GetDependencyTargetPaths</GetTargetPathDependsOn>
-	</PropertyGroup>
-	<Target Name="GetDependencyTargetPaths" AfterTargets="ResolvePackageDependenciesForBuild">
-		<ItemGroup>
-			<TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Buffers)\lib\netstandard2.0\System.Buffers.dll" IncludeRuntimeDependency="false" />
-			<TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Numerics_Vectors)\lib\netstandard2.0\System.Numerics.Vectors.dll" IncludeRuntimeDependency="false" />
-			<TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Text_Json)\lib\netstandard2.0\System.Text.Json.dll" IncludeRuntimeDependency="false" />
-			<TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Text_Encodings_Web)\lib\netstandard2.0\System.Text.Encodings.Web.dll" IncludeRuntimeDependency="false" />
-			<TargetPathWithTargetPlatformMoniker Include="$(PKGMicrosoft_Bcl_AsyncInterfaces)\lib\netstandard2.0\Microsoft.Bcl.AsyncInterfaces.dll" IncludeRuntimeDependency="false" />
-			<TargetPathWithTargetPlatformMoniker Include="$(PKGGoLive_ExpressionEvaluator)\lib\netstandard2.0\GoLive.ExpressionEvaluator.dll" IncludeRuntimeDependency="false" />
-			<TargetPathWithTargetPlatformMoniker Include="@(ResolvedCompileFileDefinitions)" IncludeRuntimeDependency="false" />
-		</ItemGroup>
-	</Target>
-	<ItemGroup>
-        <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-		<None Update="GoLive.Generator.RazorPageRoute.Generator.props" Pack="true" PackagePath="build" />
+        <PackageId>GoLive.Generator.RazorPageRoute</PackageId>
+        <Version>2.2.5-alpha</Version>
+        <NuGetVersion>$(Version)</NuGetVersion>
+        <Authors>SurgicalCoder</Authors>
+        <Description>Generates strongly typed methods that return full URL for Razor and Blazor pages.</Description>
+        <Copyright>Copyright 2023 - 2025 - SurgicalCoder</Copyright>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <PackageProjectUrl>https://github.com/surgicalcoder/RazorPageRouteGenerator</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/surgicalcoder/RazorPageRouteGenerator</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <GenerateRepositoryUrlAttribute>true</GenerateRepositoryUrlAttribute>
+        <MeziantouPolyfill_IncludedPolyfills>T:System.Range|T:System.Index|T:System.Diagnostics.CodeAnalysis.NotNullWhenAttribute|T:System.Diagnostics.CodeAnalysis.DoesNotReturnAttribute</MeziantouPolyfill_IncludedPolyfills>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="GoLive.ExpressionEvaluator" Version="1.0.2" GeneratePathProperty="true" PrivateAssets="all" Pack="true" />
+        <PackageReference Include="Meziantou.Polyfill" Version="1.0.42" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.11.0" PrivateAssets="all" />
+        <PackageReference Include="System.Buffers" Version="4.6.0" GeneratePathProperty="true" PrivateAssets="all" Pack="true" />
+        <PackageReference Include="System.Numerics.Vectors" Version="4.6.0" GeneratePathProperty="true" PrivateAssets="all" Pack="true" />
+        <PackageReference Include="System.Text.Encodings.Web" Version="9.0.0" GeneratePathProperty="true" PrivateAssets="all" Pack="true" />
+        <PackageReference Include="System.Text.Json" Version="9.0.0" GeneratePathProperty="true" PrivateAssets="all" Pack="true" />
+        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.0" GeneratePathProperty="true" PrivateAssets="all" Pack="true" />
     </ItemGroup>
-
-	<Target Name="AddPackDependencies" Inputs="@(RuntimeCopyLocalItems)" Outputs="%(RuntimeCopyLocalItems.NuGetPackageId)" DependsOnTargets="ResolvePackageAssets" BeforeTargets="GenerateNuspec" AfterTargets="ResolvePackageAssets">
-		<ItemGroup>
-			<NuGetPackageId Include="@(RuntimeCopyLocalItems -> '%(NuGetPackageId)')" />
-		</ItemGroup>
-		<PropertyGroup>
-			<NuGetPackageId>@(NuGetPackageId -&gt; Distinct())</NuGetPackageId>
-		</PropertyGroup>
-		<ItemGroup>
-			<PackageReferenceDependency Include="@(PackageReference -&gt; WithMetadataValue('Identity', '$(NuGetPackageId)'))" />
-		</ItemGroup>
-		<PropertyGroup>
-			<NuGetPackagePack>@(PackageReferenceDependency -> '%(Pack)')</NuGetPackagePack>
-		</PropertyGroup>
-		<ItemGroup Condition="'$(NuGetPackagePack)' == 'true'">
-			<_PackageFiles Include="@(RuntimeCopyLocalItems)" PackagePath="analyzers/dotnet/cs/%(Filename)%(Extension)" />
-			<RuntimeCopyLocalItems Update="@(RuntimeCopyLocalItems)" CopyLocal="true" Private="true" />
-			<ResolvedFileToPublish Include="@(RuntimeCopyLocalItems)" CopyToPublishDirectory="PreserveNewest" RelativePath="%(Filename)%(Extension)" />
-		</ItemGroup>
-	</Target>
-	<ItemGroup>
-		<None Include="build/GoLive.Generator.RazorPageRoute.Generator.props" Pack="true" PackagePath="build" />
-	</ItemGroup>
+    <PropertyGroup>
+        <GetTargetPathDependsOn>$(GetTargetPathDependsOn);GetDependencyTargetPaths</GetTargetPathDependsOn>
+    </PropertyGroup>
+    <Target Name="GetDependencyTargetPaths" AfterTargets="ResolvePackageDependenciesForBuild">
+        <ItemGroup>
+            <TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Buffers)\lib\netstandard2.0\System.Buffers.dll" IncludeRuntimeDependency="false" />
+            <TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Numerics_Vectors)\lib\netstandard2.0\System.Numerics.Vectors.dll" IncludeRuntimeDependency="false" />
+            <TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Text_Json)\lib\netstandard2.0\System.Text.Json.dll" IncludeRuntimeDependency="false" />
+            <TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Text_Encodings_Web)\lib\netstandard2.0\System.Text.Encodings.Web.dll" IncludeRuntimeDependency="false" />
+            <TargetPathWithTargetPlatformMoniker Include="$(PKGMicrosoft_Bcl_AsyncInterfaces)\lib\netstandard2.0\Microsoft.Bcl.AsyncInterfaces.dll" IncludeRuntimeDependency="false" />
+            <TargetPathWithTargetPlatformMoniker Include="$(PKGGoLive_ExpressionEvaluator)\lib\netstandard2.0\GoLive.ExpressionEvaluator.dll" IncludeRuntimeDependency="false" />
+            <TargetPathWithTargetPlatformMoniker Include="@(ResolvedCompileFileDefinitions)" IncludeRuntimeDependency="false" />
+        </ItemGroup>
+    </Target>
+    <ItemGroup>
+        <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+        <None Update="GoLive.Generator.RazorPageRoute.Generator.props" Pack="true" PackagePath="build" />
+    </ItemGroup>
+    <Target Name="AddPackDependencies" Inputs="@(RuntimeCopyLocalItems)" Outputs="%(RuntimeCopyLocalItems.NuGetPackageId)" DependsOnTargets="ResolvePackageAssets" BeforeTargets="GenerateNuspec" AfterTargets="ResolvePackageAssets">
+        <ItemGroup>
+            <NuGetPackageId Include="@(RuntimeCopyLocalItems -> '%(NuGetPackageId)')" />
+        </ItemGroup>
+        <PropertyGroup>
+            <NuGetPackageId>@(NuGetPackageId -> Distinct())</NuGetPackageId>
+        </PropertyGroup>
+        <ItemGroup>
+            <PackageReferenceDependency Include="@(PackageReference -> WithMetadataValue('Identity', '$(NuGetPackageId)'))" />
+        </ItemGroup>
+        <PropertyGroup>
+            <NuGetPackagePack>@(PackageReferenceDependency -> '%(Pack)')</NuGetPackagePack>
+        </PropertyGroup>
+        <ItemGroup Condition="'$(NuGetPackagePack)' == 'true'">
+            <_PackageFiles Include="@(RuntimeCopyLocalItems)" PackagePath="analyzers/dotnet/cs/%(Filename)%(Extension)" />
+            <RuntimeCopyLocalItems Update="@(RuntimeCopyLocalItems)" CopyLocal="true" Private="true" />
+            <ResolvedFileToPublish Include="@(RuntimeCopyLocalItems)" CopyToPublishDirectory="PreserveNewest" RelativePath="%(Filename)%(Extension)" />
+        </ItemGroup>
+    </Target>
 </Project>

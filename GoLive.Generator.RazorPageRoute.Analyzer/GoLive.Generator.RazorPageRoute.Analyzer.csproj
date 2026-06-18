@@ -2,11 +2,26 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
         <LangVersion>13</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
         <IsRoslynComponent>true</IsRoslynComponent>
         <IncludeBuildOutput>false</IncludeBuildOutput>
         <DevelopmentDependency>true</DevelopmentDependency>
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
         <PackageId>GoLive.Generator.RazorPageRoute.Analyzer</PackageId>
+        <Version>2.1.0-alpha</Version>
+        <NuGetVersion>$(Version)</NuGetVersion>
+        <Authors>SurgicalCoder</Authors>
+        <Description>Roslyn analyzer detecting stale route method calls (BRD005) for GoLive.Generator.RazorPageRoute.</Description>
+        <Copyright>Copyright 2023 - 2025 - SurgicalCoder</Copyright>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <PackageProjectUrl>https://github.com/surgicalcoder/RazorPageRouteGenerator</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/surgicalcoder/RazorPageRouteGenerator</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <GenerateRepositoryUrlAttribute>true</GenerateRepositoryUrlAttribute>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" PrivateAssets="all" />

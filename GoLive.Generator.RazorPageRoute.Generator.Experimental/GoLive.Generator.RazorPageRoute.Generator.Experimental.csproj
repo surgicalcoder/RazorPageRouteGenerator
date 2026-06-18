@@ -12,7 +12,6 @@
         <PackageId>GoLive.Generator.RazorPageRoute.Experimental</PackageId>
         <Authors>SurgicalCoder</Authors>
         <Company>N/A</Company>
-        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Description>Experimental source generator for strongly-typed Razor page routes. Parses @page directives directly from .razor files.</Description>
         <Copyright>Copyright 2023 - 2025 - SurgicalCoder</Copyright>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
@@ -23,6 +22,7 @@
         <RepositoryUrl>https://github.com/surgicalcoder/RazorPageRouteGenerator</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <Version>2.1.0-alpha</Version>
+        <NuGetVersion>$(Version)</NuGetVersion>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="GoLive.ExpressionEvaluator" Version="1.0.2" GeneratePathProperty="true" PrivateAssets="all" Pack="true" />

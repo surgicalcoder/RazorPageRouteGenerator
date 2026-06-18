@@ -4,5 +4,16 @@
     "OutputToFiles": "PageRoute.cs",
     "OutputLastCreatedTime": true,
     "OutputExtensionMethod": true,
-    "OutputIAuthorizeData": false
+    "OutputIAuthorizeData": true,
+    "ExcludePattern": "^_.*",
+    "EnableDuplicateRouteWarning": true,
+    "GenerateRouteConstants": true,
+    "GenerateTryMatch": true,
+    "GenerateReverseMap": true,
+    "GenerateFluentBuilder": true,
+    "EnableRouteGrouping": true,
+    "GenerateValidation": true,
+    "GenerateHttpFile": true,
+    "JsonRepresentation": "routes.json",
+    "HttpFileOutput": "wwwroot/routes.http"
 }

@@ -1,0 +1,10 @@
+@page "/secure"
+@attribute [Authorize]
+
+<h3>Secure Page</h3>
+<p>This page requires authentication.</p>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string ReturnUrl { get; set; }
+}

@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoLive.Generator.RazorPageR
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly10", "GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly10\GoLive.Generator.RazorPageRoute.Tests.BlazorWebAssembly10.csproj", "{68DE3A42-878E-48FA-AC9F-5A01987BE837}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoLive.Generator.RazorPageRoute.Analyzer", "GoLive.Generator.RazorPageRoute.Analyzer\GoLive.Generator.RazorPageRoute.Analyzer.csproj", "{AC66486C-814A-4C0C-825B-F91E39F1CB82}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,6 +113,18 @@ Global
 		{68DE3A42-878E-48FA-AC9F-5A01987BE837}.Release|x64.Build.0 = Release|Any CPU
 		{68DE3A42-878E-48FA-AC9F-5A01987BE837}.Release|x86.ActiveCfg = Release|Any CPU
 		{68DE3A42-878E-48FA-AC9F-5A01987BE837}.Release|x86.Build.0 = Release|Any CPU
+		{AC66486C-814A-4C0C-825B-F91E39F1CB82}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC66486C-814A-4C0C-825B-F91E39F1CB82}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC66486C-814A-4C0C-825B-F91E39F1CB82}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{AC66486C-814A-4C0C-825B-F91E39F1CB82}.Debug|x64.Build.0 = Debug|Any CPU
+		{AC66486C-814A-4C0C-825B-F91E39F1CB82}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{AC66486C-814A-4C0C-825B-F91E39F1CB82}.Debug|x86.Build.0 = Debug|Any CPU
+		{AC66486C-814A-4C0C-825B-F91E39F1CB82}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC66486C-814A-4C0C-825B-F91E39F1CB82}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC66486C-814A-4C0C-825B-F91E39F1CB82}.Release|x64.ActiveCfg = Release|Any CPU
+		{AC66486C-814A-4C0C-825B-F91E39F1CB82}.Release|x64.Build.0 = Release|Any CPU
+		{AC66486C-814A-4C0C-825B-F91E39F1CB82}.Release|x86.ActiveCfg = Release|Any CPU
+		{AC66486C-814A-4C0C-825B-F91E39F1CB82}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

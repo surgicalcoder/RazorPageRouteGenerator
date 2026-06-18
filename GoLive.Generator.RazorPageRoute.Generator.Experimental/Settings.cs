@@ -14,25 +14,36 @@ public class Settings
     public string DebugOutputFile { get; set; }
 
     public bool OutputLastCreatedTime { get; set; }
-        
+
     public bool OutputExtensionMethod { get; set; }
-    
+
     public Settings_JSInvokables Invokables { get; set; } = new();
 
     public List<Settings_Auth> Auth { get; set; } = [];
     public bool OutputIAuthorizeData { get; set; }
-    
+
     [JsonConverter(typeof(StringOrArrayJsonConverter))]
     public List<string> JsonRepresentation { get; set; } = [];
+
+    public string ExcludePattern { get; set; }
+    public bool GenerateValidation { get; set; } = true;
+    public bool EnableRouteGrouping { get; set; }
+    public bool GenerateTryMatch { get; set; }
+    public bool GenerateReverseMap { get; set; }
+    public bool GenerateFluentBuilder { get; set; }
+    public bool GenerateRouteConstants { get; set; } = true;
+    public bool EnableDuplicateRouteWarning { get; set; } = true;
+    public bool GenerateHttpFile { get; set; }
+    public string HttpFileOutput { get; set; }
 }
 
 public class Settings_JSInvokables
 {
     public bool Enabled { get; set; }
-    
+
     [JsonConverter(typeof(StringOrArrayJsonConverter))]
     public List<string> OutputToFiles { get; set; } = [];
-    
+
     public string JSClassName { get; set; }
 }
 

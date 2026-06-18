@@ -1,0 +1,24 @@
+### Counter
+GET {{baseUrl}}/counter
+
+### NotFound
+GET {{baseUrl}}/not-found
+
+### Home
+GET {{baseUrl}}/
+
+### Weather
+GET {{baseUrl}}/weather
+
+### Profile
+GET {{baseUrl}}/profile
+
+### Profile
+GET {{baseUrl}}/profile/{id:int}
+
+### Admin
+GET {{baseUrl}}/admin/dashboard
+
+### SecurePage
+GET {{baseUrl}}/secure
+

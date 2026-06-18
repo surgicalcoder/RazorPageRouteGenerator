@@ -1,11 +1,33 @@
 using System.Collections.Generic;
-using Microsoft.CodeAnalysis;
 
 namespace GoLive.Generator.RazorPageRoute.Generator.Experimental;
 
-public record PageRoute(string Name, string Route, List<PageRouteQuerystringParameter> QueryString, PageRouteAuth Auth = null, List<Invokable> Invokables = null);
-    
-public class PageRouteAuth{
+public record PageRoute(
+    string Name,
+    string Route,
+    List<PageRouteQuerystringParameter> QueryString,
+    PageRouteAuth Auth = null,
+    List<Invokable> Invokables = null,
+    List<RouteParameterInfo> RouteParams = null,
+    List<ValidationRule> Validations = null)
+{
+    public string FullTypeName { get; init; } = Name;
+}
+
+public record RouteParameterInfo(
+    string Name,
+    string Type,
+    bool HasParameterAttr,
+    string Constraint);
+
+public record ValidationRule(
+    string PropertyName,
+    string RuleType,
+    string Param,
+    string Message);
+
+public class PageRouteAuth
+{
     public List<string> Roles { get; set; }
     public List<string> Policies { get; set; }
     public List<string> AuthenticationSchemes { get; set; }

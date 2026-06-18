@@ -6,6 +6,8 @@ jobs:
   publish:
     env:
      MainProject: 'GoLive.Generator.RazorPageRoute.Generator/GoLive.Generator.RazorPageRoute.Generator.csproj'
+     ExperimentalProject: 'GoLive.Generator.RazorPageRoute.Generator.Experimental/GoLive.Generator.RazorPageRoute.Generator.Experimental.csproj'
+     AnalyzerProject: 'GoLive.Generator.RazorPageRoute.Analyzer/GoLive.Generator.RazorPageRoute.Analyzer.csproj'
      BUILD_VER : '2.1'
     name: build, pack & publish
     runs-on: windows-latest
@@ -22,7 +24,11 @@ jobs:
       - name: Get Build Version
         run: |
           echo "BUILD_VERSION=${{ format('{0}.{1}', env.BUILD_VER, github.run_number ) }}-alpha" >> $GITHUB_ENV
-      - name: Build
-        run: dotnet pack $SOLUTION --configuration Release -p:Version=$env:BUILD_VERSION -p:PackageVersion=$env:BUILD_VERSION -p:GeneratePackageOnBuild=false
+      - name: Build Main
+        run: dotnet pack $env:MainProject --configuration Release -p:Version=$env:BUILD_VERSION -p:PackageVersion=$env:BUILD_VERSION -p:GeneratePackageOnBuild=false
+      - name: Build Experimental
+        run: dotnet pack $env:ExperimentalProject --configuration Release -p:Version=$env:BUILD_VERSION -p:PackageVersion=$env:BUILD_VERSION -p:GeneratePackageOnBuild=false
+      - name: Build Analyzer
+        run: dotnet pack $env:AnalyzerProject --configuration Release -p:Version=$env:BUILD_VERSION -p:PackageVersion=$env:BUILD_VERSION -p:GeneratePackageOnBuild=false
       - name: Publish
         run: nuget push **/*.nupkg -Source 'https://api.nuget.org/v3/index.json' 

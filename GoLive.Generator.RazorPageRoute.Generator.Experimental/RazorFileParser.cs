@@ -12,13 +12,15 @@ internal sealed class RazorFileParseResult
     public ImmutableArray<string> Routes { get; }
     public ImmutableArray<RazorAttribute> Attributes { get; }
     public ImmutableArray<CodeMember> Members { get; }
+    public bool Excluded { get; }
 
-    public RazorFileParseResult(string fileName, ImmutableArray<string> routes, ImmutableArray<RazorAttribute> attributes, ImmutableArray<CodeMember> members)
+    public RazorFileParseResult(string fileName, ImmutableArray<string> routes, ImmutableArray<RazorAttribute> attributes, ImmutableArray<CodeMember> members, bool excluded)
     {
         FileName = fileName;
         Routes = routes;
         Attributes = attributes;
         Members = members;
+        Excluded = excluded;
     }
 }
 
@@ -41,18 +43,35 @@ internal static class RazorFileParser
         @"@attribute\s+\[(.+?)\]\s*(?:\r?\n|$)",
         RegexOptions.Compiled | RegexOptions.Multiline);
 
+    private static readonly Regex ExcludeAttributeRegex = new(
+        @"@attribute\s+\[(?:.*\.)?ExcludeFromRouteGeneration(?:Attribute)?\s*\]",
+        RegexOptions.Compiled | RegexOptions.Multiline);
+
     private static readonly Regex CodeBlockStartRegex = new(
         @"@(?:code|functions)\s*\{",
         RegexOptions.Compiled | RegexOptions.Multiline);
 
+    private static readonly Regex VerbatimStringRegex = new(
+        @"@""[^""]*(?:""""[^""]*)*""",
+        RegexOptions.Compiled);
+
+    private static readonly Regex InterpolatedVerbatimStringRegex = new(
+        @"\$@""[^""]*(?:""""[^""]*)*""",
+        RegexOptions.Compiled);
+
+    private static readonly Regex InterpolatedStringSimpleRegex = new(
+        @"\$\""(?:[^\""\\]|\\.)*\""",
+        RegexOptions.Compiled);
+
     public static RazorFileParseResult Parse(string fileName, string content)
     {
+        var excluded = ExcludeAttributeRegex.IsMatch(content);
         var routes = ExtractRoutes(content);
         var attributes = ExtractAttributes(content);
         var codeBlock = ExtractCodeBlockContent(content);
         var members = codeBlock.Length > 0 ? ExtractCodeMembers(codeBlock) : [];
 
-        return new RazorFileParseResult(fileName, routes, attributes, members);
+        return new RazorFileParseResult(fileName, routes, attributes, members, excluded);
     }
 
     private static ImmutableArray<string> ExtractRoutes(string content)
@@ -105,7 +124,23 @@ internal static class RazorFileParser
 
         while (i < text.Length && depth > 0)
         {
-            var c = text[i];
+            char c = text[i];
+
+            if (i + 1 < text.Length)
+            {
+                string pair = text.Substring(i, 2);
+
+                if (pair == "@\"" || pair == "$@")
+                {
+                    i = SkipVerbatimString(text, i);
+                    continue;
+                }
+                if (pair == "$\"")
+                {
+                    i = SkipInterpolatedString(text, i);
+                    continue;
+                }
+            }
 
             if (c == '"')
             {
@@ -157,10 +192,45 @@ internal static class RazorFileParser
         return text.Substring(startIndex, i - startIndex - (depth == 0 ? 1 : 0));
     }
 
+    private static int SkipVerbatimString(string text, int i)
+    {
+        i += 2;
+        while (i < text.Length)
+        {
+            if (text[i] == '"' && i + 1 < text.Length && text[i + 1] == '"')
+            {
+                i += 2;
+                continue;
+            }
+            if (text[i] == '"') return i + 1;
+            i++;
+        }
+        return i;
+    }
+
+    private static int SkipInterpolatedString(string text, int i)
+    {
+        i += 2;
+        int depth = 0;
+        while (i < text.Length)
+        {
+            char c = text[i];
+
+            if (c == '\\' && i + 1 < text.Length) { i += 2; continue; }
+            if (c == '{') { depth++; i++; continue; }
+            if (c == '}' && depth > 0) { depth--; i++; continue; }
+            if (c == '"' && depth == 0) return i + 1;
+
+            i++;
+        }
+        return i;
+    }
+
     private static ImmutableArray<CodeMember> ExtractCodeMembers(string codeBlockContent)
     {
         var wrappedCode = $@"using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using System.ComponentModel.DataAnnotations;
 class _W {{ {codeBlockContent} }}";
 
         SyntaxTree tree;

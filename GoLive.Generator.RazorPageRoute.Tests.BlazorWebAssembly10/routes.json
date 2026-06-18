@@ -1,0 +1,133 @@
+[
+  {
+    "Name": "Counter",
+    "Route": "/counter",
+    "QueryString": [],
+    "Auth": null,
+    "Invokables": [],
+    "RouteParams": null,
+    "Validations": []
+  },
+  {
+    "Name": "NotFound",
+    "Route": "/not-found",
+    "QueryString": [],
+    "Auth": null,
+    "Invokables": [],
+    "RouteParams": null,
+    "Validations": []
+  },
+  {
+    "Name": "Home",
+    "Route": "/",
+    "QueryString": [],
+    "Auth": null,
+    "Invokables": [],
+    "RouteParams": null,
+    "Validations": []
+  },
+  {
+    "Name": "Weather",
+    "Route": "/weather",
+    "QueryString": [],
+    "Auth": null,
+    "Invokables": [],
+    "RouteParams": null,
+    "Validations": []
+  },
+  {
+    "Name": "Profile",
+    "Route": "/profile",
+    "QueryString": [
+      {
+        "Name": "Name",
+        "Type": "string"
+      },
+      {
+        "Name": "Age",
+        "Type": "int"
+      }
+    ],
+    "Auth": null,
+    "Invokables": [
+      {
+        "MethodName": "Profile.Save",
+        "InvokableName": "saveProfile"
+      }
+    ],
+    "RouteParams": null,
+    "Validations": []
+  },
+  {
+    "Name": "Profile",
+    "Route": "/profile/{id:int}",
+    "QueryString": [
+      {
+        "Name": "Name",
+        "Type": "string"
+      },
+      {
+        "Name": "Age",
+        "Type": "int"
+      }
+    ],
+    "Auth": null,
+    "Invokables": [
+      {
+        "MethodName": "Profile.Save",
+        "InvokableName": "saveProfile"
+      }
+    ],
+    "RouteParams": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "HasParameterAttr": false,
+        "Constraint": "System.Int32"
+      }
+    ],
+    "Validations": []
+  },
+  {
+    "Name": "Admin",
+    "Route": "/admin/dashboard",
+    "QueryString": [
+      {
+        "Name": "Section",
+        "Type": "string"
+      }
+    ],
+    "Auth": {
+      "RequiresAuthentication": true,
+      "Roles": [
+        "admin"
+      ],
+      "Policies": null,
+      "AuthenticationSchemes": null,
+      "CustomAuth": null
+    },
+    "Invokables": [],
+    "RouteParams": null,
+    "Validations": []
+  },
+  {
+    "Name": "SecurePage",
+    "Route": "/secure",
+    "QueryString": [
+      {
+        "Name": "ReturnUrl",
+        "Type": "string"
+      }
+    ],
+    "Auth": {
+      "RequiresAuthentication": true,
+      "Roles": null,
+      "Policies": null,
+      "AuthenticationSchemes": null,
+      "CustomAuth": null
+    },
+    "Invokables": [],
+    "RouteParams": null,
+    "Validations": []
+  }
+]

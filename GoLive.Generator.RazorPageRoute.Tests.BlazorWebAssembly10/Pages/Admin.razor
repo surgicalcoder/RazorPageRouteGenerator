@@ -1,0 +1,10 @@
+@page "/admin/dashboard"
+@attribute [Authorize(Roles = "admin")]
+
+<h3>Admin Dashboard</h3>
+<p>Requires admin role.</p>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string Section { get; set; }
+}

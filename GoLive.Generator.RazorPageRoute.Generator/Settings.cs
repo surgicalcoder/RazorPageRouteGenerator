@@ -16,7 +16,9 @@ public class Settings
     public bool OutputLastCreatedTime { get; set; }
         
     public bool OutputExtensionMethod { get; set; }
-    
+
+    public bool EnableRouteGrouping { get; set; }
+
     public Settings_JSInvokables Invokables { get; set; } = new();
 
     public List<Settings_Auth> Auth { get; set; } = [];

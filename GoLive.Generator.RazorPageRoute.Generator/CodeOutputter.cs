@@ -49,11 +49,21 @@ public static class CodeOutputter
         }
 
         List<string> completedAuthData = [];
-        foreach (var pageRoute in pageRoutes)
+        var groupingEnabled = config.OutputExtensionMethod && config.EnableRouteGrouping;
+        var planned = RouteGrouper.Plan(pageRoutes, groupingEnabled);
+        var ordered = groupingEnabled
+            ? planned.OrderBy(p => p.Group == null ? 1 : 0)
+                .ThenBy(p => p.Group ?? string.Empty, StringComparer.Ordinal)
+                .ThenBy(p => p.Method, StringComparer.Ordinal)
+                .ToList()
+            : planned;
+
+        string? currentGroup = null;
+        foreach (var plan in ordered)
         {
+            var pageRoute = plan.Route;
             var routeTemplate = TemplateParser.ParseTemplate(pageRoute.Route);
-            
-            var SlugName = pageRoute.Route.Length > 1 ? Slug.Create(string.Join(".", routeTemplate.Segments.Where(f => !f.IsParameter).Select(f => f.Value)), new SlugOptions { ToLower = false }) : "Home";
+            var SlugName = plan.SlugName;
 
             if (string.IsNullOrWhiteSpace(SlugName))
             {
@@ -83,13 +93,33 @@ public static class CodeOutputter
 
             if (config.OutputExtensionMethod)
             {
-                OutputRouteExtensionMethod(source, SlugName, parameterString, routeTemplate, pageRoute, config);
+                if (groupingEnabled && plan.Group != currentGroup)
+                {
+                    if (currentGroup != null)
+                    {
+                        source.AppendCloseCurlyBracketLine();
+                    }
+                    if (plan.Group != null)
+                    {
+                        source.AppendLine($"public static class {plan.Group}");
+                        source.AppendOpenCurlyBracketLine();
+                    }
+                    currentGroup = plan.Group;
+                }
+
+                var extensionMethodName = groupingEnabled ? plan.Method : SlugName;
+                OutputRouteExtensionMethod(source, extensionMethodName, parameterString, routeTemplate, pageRoute, config);
                 if (!completedAuthData.Contains(SlugName))
                 {
                     completedAuthData.Add(SlugName);
                     OutputRouteAuthDataClasses(source, SlugName, pageRoute, config);
                 }
             }
+        }
+
+        if (groupingEnabled && currentGroup != null)
+        {
+            source.AppendCloseCurlyBracketLine();
         }
 
         source.AppendCloseCurlyBracketLine();

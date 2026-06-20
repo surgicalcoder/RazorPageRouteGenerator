@@ -266,69 +266,95 @@ public class BlazorRouteDiscoveryGenerator : IIncrementalGenerator
 
         if (routes.Count == 0)
         {
+            source.AppendCloseCurlyBracketLine();
+            source.AppendCloseCurlyBracketLine();
             return source.ToString();
         }
 
+        var groupingEnabled = settings.OutputExtensionMethod && settings.EnableRouteGrouping;
+        var planned = RouteGrouper.Plan(routes, groupingEnabled);
+        var ordered = groupingEnabled
+            ? planned.OrderBy(p => p.Group == null ? 1 : 0)
+                .ThenBy(p => p.Group ?? string.Empty, StringComparer.Ordinal)
+                .ThenBy(p => p.Method, StringComparer.Ordinal)
+                .ToList()
+            : planned;
+
         List<string> completedAuthData = [];
-        foreach (var pageRoute in routes)
+        string? currentGroup = null;
+
+        foreach (var plan in ordered)
         {
-            AppendRoute(source, pageRoute, settings, completedAuthData);
+            var pageRoute = plan.Route;
+            var routeTemplate = Routing.TemplateParser.ParseTemplate(pageRoute.Route);
+
+            var slugName = plan.SlugName;
+            if (string.IsNullOrWhiteSpace(slugName))
+            {
+                slugName = pageRoute.Name;
+            }
+
+            var routeSegments = routeTemplate.Segments
+                .Where(e => e.IsParameter)
+                .Select(segment =>
+                {
+                    var constraint = segment.Constraints.Any()
+                        ? segment.Constraints.FirstOrDefault().GetConstraintType()
+                        : null;
+
+                    if (constraint == null)
+                        return $"string {segment.Value}";
+
+                    return segment.IsOptional
+                        ? $"{constraint.FullName}? {segment.Value}"
+                        : $"{constraint.FullName} {segment.Value}";
+                }).ToList();
+
+            if (pageRoute.QueryString is { Count: > 0 })
+            {
+                routeSegments.AddRange(pageRoute.QueryString
+                    .Select(prqp => $"{prqp.Type} {prqp.Name} = default"));
+            }
+
+            var parameterString = string.Join(", ", routeSegments);
+
+            AppendRouteMethod(source, slugName, parameterString, routeTemplate, pageRoute);
+
+            if (settings.OutputExtensionMethod)
+            {
+                if (groupingEnabled && plan.Group != currentGroup)
+                {
+                    if (currentGroup != null)
+                    {
+                        source.AppendCloseCurlyBracketLine();
+                    }
+                    if (plan.Group != null)
+                    {
+                        source.AppendLine($"public static class {plan.Group}");
+                        source.AppendOpenCurlyBracketLine();
+                    }
+                    currentGroup = plan.Group;
+                }
+
+                var extensionMethodName = groupingEnabled ? plan.Method : slugName;
+                AppendExtensionMethod(source, extensionMethodName, parameterString, routeTemplate, pageRoute, settings);
+                if (!completedAuthData.Contains(slugName))
+                {
+                    completedAuthData.Add(slugName);
+                    AppendAuthDataClass(source, slugName, pageRoute, settings);
+                }
+            }
+        }
+
+        if (groupingEnabled && currentGroup != null)
+        {
+            source.AppendCloseCurlyBracketLine();
         }
 
         source.AppendCloseCurlyBracketLine();
         source.AppendCloseCurlyBracketLine();
 
         return source.ToString();
-    }
-
-    private static void AppendRoute(SourceStringBuilder source, PageRoute pageRoute, Settings settings, List<string> completedAuthData)
-    {
-        var routeTemplate = Routing.TemplateParser.ParseTemplate(pageRoute.Route);
-
-        var slugName = pageRoute.Route.Length > 1
-            ? Slug.Create(string.Join(".", routeTemplate.Segments.Where(f => !f.IsParameter).Select(f => f.Value)), new SlugOptions { ToLower = false })
-            : "Home";
-
-        if (string.IsNullOrWhiteSpace(slugName))
-        {
-            slugName = pageRoute.Name;
-        }
-
-        var routeSegments = routeTemplate.Segments
-            .Where(e => e.IsParameter)
-            .Select(segment =>
-            {
-                var constraint = segment.Constraints.Any()
-                    ? segment.Constraints.FirstOrDefault().GetConstraintType()
-                    : null;
-
-                if (constraint == null)
-                    return $"string {segment.Value}";
-
-                return segment.IsOptional
-                    ? $"{constraint.FullName}? {segment.Value}"
-                    : $"{constraint.FullName} {segment.Value}";
-            }).ToList();
-
-        if (pageRoute.QueryString is { Count: > 0 })
-        {
-            routeSegments.AddRange(pageRoute.QueryString
-                .Select(prqp => $"{prqp.Type} {prqp.Name} = default"));
-        }
-
-        var parameterString = string.Join(", ", routeSegments);
-
-        AppendRouteMethod(source, slugName, parameterString, routeTemplate, pageRoute);
-
-        if (settings.OutputExtensionMethod)
-        {
-            AppendExtensionMethod(source, slugName, parameterString, routeTemplate, pageRoute, settings);
-            if (!completedAuthData.Contains(slugName))
-            {
-                completedAuthData.Add(slugName);
-                AppendAuthDataClass(source, slugName, pageRoute, settings);
-            }
-        }
     }
 
     private static void AppendRouteMethod(SourceStringBuilder source, string slugName, string parameterString,

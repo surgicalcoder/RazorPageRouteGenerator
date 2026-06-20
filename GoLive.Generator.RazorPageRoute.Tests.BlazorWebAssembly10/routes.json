@@ -9,6 +9,26 @@
     "Validations": []
   },
   {
+    "Name": "SecurePage",
+    "Route": "/secure",
+    "QueryString": [
+      {
+        "Name": "ReturnUrl",
+        "Type": "string"
+      }
+    ],
+    "Auth": {
+      "RequiresAuthentication": true,
+      "Roles": null,
+      "Policies": null,
+      "AuthenticationSchemes": null,
+      "CustomAuth": null
+    },
+    "Invokables": [],
+    "RouteParams": null,
+    "Validations": []
+  },
+  {
     "Name": "NotFound",
     "Route": "/not-found",
     "QueryString": [],
@@ -20,15 +40,6 @@
   {
     "Name": "Home",
     "Route": "/",
-    "QueryString": [],
-    "Auth": null,
-    "Invokables": [],
-    "RouteParams": null,
-    "Validations": []
-  },
-  {
-    "Name": "Weather",
-    "Route": "/weather",
     "QueryString": [],
     "Auth": null,
     "Invokables": [],
@@ -89,6 +100,15 @@
     "Validations": []
   },
   {
+    "Name": "Weather",
+    "Route": "/weather",
+    "QueryString": [],
+    "Auth": null,
+    "Invokables": [],
+    "RouteParams": null,
+    "Validations": []
+  },
+  {
     "Name": "Admin",
     "Route": "/admin/dashboard",
     "QueryString": [
@@ -102,26 +122,6 @@
       "Roles": [
         "admin"
       ],
-      "Policies": null,
-      "AuthenticationSchemes": null,
-      "CustomAuth": null
-    },
-    "Invokables": [],
-    "RouteParams": null,
-    "Validations": []
-  },
-  {
-    "Name": "SecurePage",
-    "Route": "/secure",
-    "QueryString": [
-      {
-        "Name": "ReturnUrl",
-        "Type": "string"
-      }
-    ],
-    "Auth": {
-      "RequiresAuthentication": true,
-      "Roles": null,
       "Policies": null,
       "AuthenticationSchemes": null,
       "CustomAuth": null

@@ -5,4 +5,7 @@
     <CompilerVisibleProperty Include="BaseIntermediateOutputPath" />
     <CompilerVisibleProperty Include="BaseOutputPath" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="GoLive.Generator.RazorPageRoute.Generator.Tests" />
+  </ItemGroup>
 </Project>

@@ -286,7 +286,7 @@ public class BlazorRouteDiscoveryGenerator : IIncrementalGenerator
         var routeTemplate = Routing.TemplateParser.ParseTemplate(pageRoute.Route);
 
         var slugName = pageRoute.Route.Length > 1
-            ? Slug.Create(string.Join(".", routeTemplate.Segments.Where(f => !f.IsParameter).Select(f => f.Value)))
+            ? Slug.Create(string.Join(".", routeTemplate.Segments.Where(f => !f.IsParameter).Select(f => f.Value)), new SlugOptions { ToLower = false })
             : "Home";
 
         if (string.IsNullOrWhiteSpace(slugName))

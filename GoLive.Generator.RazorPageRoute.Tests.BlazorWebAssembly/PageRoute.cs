@@ -1,4 +1,4 @@
-// This file was generated on Thu, 18 Jun 2026 21:09:28 GMT
+// This file was generated on Sat, 20 Jun 2026 23:56:26 GMT
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -89,7 +89,7 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly
             manager.NavigateTo(url, forceLoad, replace);
         }
 
-        public static string customauthpage()
+        public static string CustomAuthPage()
         {
             string url = "/CustomAuthPage";
             return url;
@@ -101,20 +101,20 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly
         /// Custom Auth Constructor Params: [arg0, new[] { "Admin" }]
         /// Custom Auth Named Params: 
         /// </summary>
-        public static void customauthpage(this NavigationManager manager, bool forceLoad = false, bool replace = false)
+        public static void CustomAuthPage(this NavigationManager manager, bool forceLoad = false, bool replace = false)
         {
             string url = "/CustomAuthPage";
             manager.NavigateTo(url, forceLoad, replace);
         }
 
-        public class customauthpage_AuthData : IAuthorizeData
+        public class CustomAuthPage_AuthData : IAuthorizeData
         {
             public string Policy { get; set; } = String.Empty;
             public string Roles { get; set; } = "new[] { \"Admin\" }, superuser";
             public string AuthenticationSchemes { get; set; } = String.Empty;
         }
 
-        public static string authpage()
+        public static string AuthPage()
         {
             string url = "/AuthPage";
             return url;
@@ -124,13 +124,13 @@ namespace GoLive.Generator.RazorPageRoute.Tests.BlazorWebassembly
         /// Page Requires Authentication
         /// Roles: Const.Admin
         /// </summary>
-        public static void authpage(this NavigationManager manager, bool forceLoad = false, bool replace = false)
+        public static void AuthPage(this NavigationManager manager, bool forceLoad = false, bool replace = false)
         {
             string url = "/AuthPage";
             manager.NavigateTo(url, forceLoad, replace);
         }
 
-        public class authpage_AuthData : IAuthorizeData
+        public class AuthPage_AuthData : IAuthorizeData
         {
             public string Policy { get; set; } = String.Empty;
             public string Roles { get; set; } = "Const.Admin";

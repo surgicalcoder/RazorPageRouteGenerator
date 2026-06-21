@@ -129,5 +129,14 @@
     "Invokables": [],
     "RouteParams": null,
     "Validations": []
+  },
+  {
+    "Name": "AdminTenantAdd",
+    "Route": "/Admin/Tenant/Add",
+    "QueryString": [],
+    "Auth": null,
+    "Invokables": [],
+    "RouteParams": null,
+    "Validations": []
   }
 ]

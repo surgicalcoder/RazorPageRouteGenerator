@@ -21,6 +21,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\GoLive.Generator.RazorPageRoute.Generator\GoLive.Generator.RazorPageRoute.Generator.csproj" />
+        <ProjectReference Include="..\GoLive.Generator.RazorPageRoute.Generator.Experimental\GoLive.Generator.RazorPageRoute.Generator.Experimental.csproj" />
     </ItemGroup>
 
 </Project>

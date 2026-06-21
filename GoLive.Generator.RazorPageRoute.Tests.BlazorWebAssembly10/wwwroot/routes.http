@@ -22,3 +22,6 @@ GET {{baseUrl}}/weather
 ### Admin
 GET {{baseUrl}}/admin/dashboard
 
+### AdminTenantAdd
+GET {{baseUrl}}/Admin/Tenant/Add
+

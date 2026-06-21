@@ -8,7 +8,7 @@ jobs:
      MainProject: 'GoLive.Generator.RazorPageRoute.Generator/GoLive.Generator.RazorPageRoute.Generator.csproj'
      ExperimentalProject: 'GoLive.Generator.RazorPageRoute.Generator.Experimental/GoLive.Generator.RazorPageRoute.Generator.Experimental.csproj'
      AnalyzerProject: 'GoLive.Generator.RazorPageRoute.Analyzer/GoLive.Generator.RazorPageRoute.Analyzer.csproj'
-     BUILD_VER : '2.2'
+     BUILD_VER : '2.3'
     name: build, pack & publish
     runs-on: windows-latest
     steps:

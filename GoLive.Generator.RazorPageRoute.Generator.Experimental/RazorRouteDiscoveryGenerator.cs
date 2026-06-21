@@ -648,7 +648,7 @@ public class BlazorRouteDiscoveryGenerator : IIncrementalGenerator
             .Select(f => f.Value)
             .ToList();
 
-        var fullSlug = Slug.Create(string.Join(".", nonParamValues));
+        var fullSlug = Slug.Create(string.Join(".", nonParamValues), new SlugOptions { ToLower = false });
         return string.IsNullOrWhiteSpace(fullSlug) ? pageRoute.Name : fullSlug;
     }
 
@@ -811,7 +811,7 @@ public class BlazorRouteDiscoveryGenerator : IIncrementalGenerator
             .Select(f => f.Value)
             .ToList();
 
-        var fullSlug = Slug.Create(string.Join(".", nonParamValues));
+        var fullSlug = Slug.Create(string.Join(".", nonParamValues), new SlugOptions { ToLower = false });
         if (string.IsNullOrWhiteSpace(fullSlug))
             fullSlug = pageRoute.Name;
 
@@ -824,11 +824,11 @@ public class BlazorRouteDiscoveryGenerator : IIncrementalGenerator
 
         // Grouping mode: first literal segment is group name, rest forms method slug
         var firstLiteral = nonParamValues[0];
-        var groupName = Slug.Create(firstLiteral);
+        var groupName = Slug.Create(firstLiteral, new SlugOptions { ToLower = false });
 
         var remainingNonParam = nonParamValues.Skip(1).ToList();
         var methodSlug = remainingNonParam.Count > 0
-            ? Slug.Create(string.Join(".", remainingNonParam))
+            ? Slug.Create(string.Join(".", remainingNonParam), new SlugOptions { ToLower = false })
             : "Index";
 
         if (string.IsNullOrWhiteSpace(methodSlug))

@@ -487,3 +487,5 @@ FodyWeavers.xsd
 GoLive.Generator.RazorPageRoute.Generator/Properties/launchSettings.json
 
 .agentbridge/
+
+.omo/

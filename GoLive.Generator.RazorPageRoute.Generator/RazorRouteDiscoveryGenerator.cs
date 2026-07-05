@@ -68,6 +68,9 @@ public class BlazorRouteDiscoveryGenerator : IIncrementalGenerator
                 return;
             }
 
+            // Sort routes by URL for deterministic output order
+            result.Routes.Sort(static (a, b) => string.Compare(a.Route, b.Route, StringComparison.Ordinal));
+
             var source = BuildSource(result.Settings, result.Routes);
             if (string.IsNullOrWhiteSpace(source))
                 return;

@@ -94,6 +94,9 @@ public class BlazorRouteDiscoveryGenerator : IIncrementalGenerator
         {
             var (settings, routes, duplicates, renamedRoutes, cachePath) = result!.Value;
 
+            // Sort routes by URL for deterministic output order
+            routes.Sort(static (a, b) => string.Compare(a.Route, b.Route, StringComparison.Ordinal));
+
             if (settings.EnableDuplicateRouteWarning)
             {
                 foreach (var (route, fileNames) in duplicates)

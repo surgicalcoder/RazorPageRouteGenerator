@@ -14,6 +14,9 @@ public static class CodeOutputter
 
     public static void GenerateOutput(Settings config, List<PageRoute> pageRoutes)
     {
+        // Sort routes by URL for deterministic output order
+        pageRoutes.Sort(static (a, b) => string.Compare(a.Route, b.Route, StringComparison.Ordinal));
+
         var source = new SourceStringBuilder();
 
         if (config.OutputLastCreatedTime)

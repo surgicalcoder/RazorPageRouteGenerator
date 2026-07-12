@@ -12,6 +12,7 @@ public record PageRoute(
     List<ValidationRule> Validations = null)
 {
     public string FullTypeName { get; init; } = Name;
+    public string RootNamespace { get; init; } = Name;
 }
 
 public record RouteParameterInfo(

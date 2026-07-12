@@ -35,6 +35,7 @@ public class Settings
     public bool EnableDuplicateRouteWarning { get; set; } = true;
     public bool GenerateHttpFile { get; set; }
     public string HttpFileOutput { get; set; }
+    public Settings_Manifest Manifest { get; set; }
 }
 
 public class Settings_JSInvokables
@@ -54,4 +55,13 @@ public class Settings_Auth
     public string PolicyTransformer { get; set; }
     public string RolesTransformer { get; set; }
     public string AuthenticationSchemeTransformer { get; set; }
+}
+
+public class Settings_Manifest
+{
+    public string FilePath { get; set; }
+    public string Namespace { get; set; }
+    public string ClassName { get; set; }
+    public bool OutputRouteEntry { get; set; }
+    public string AssemblyName { get; set; }
 }

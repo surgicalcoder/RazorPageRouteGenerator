@@ -185,6 +185,16 @@ public class BlazorRouteDiscoveryGenerator : IIncrementalGenerator
             {
                 GenerateJSInvokable(settings, routes);
             }
+
+            if (settings.Manifest != null && !string.IsNullOrEmpty(settings.Manifest.FilePath))
+            {
+                try
+                {
+                    var manifestContent = GenerateManifest(settings, routes);
+                    File.WriteAllText(settings.Manifest.FilePath, manifestContent);
+                }
+                catch { }
+            }
         });
     }
 
@@ -222,6 +232,11 @@ public class BlazorRouteDiscoveryGenerator : IIncrementalGenerator
         if (config.GenerateHttpFile && !string.IsNullOrEmpty(config.HttpFileOutput))
         {
             config.HttpFileOutput = Path.GetFullPath(Path.Combine(configFileDirectory!, config.HttpFileOutput));
+        }
+
+        if (config.Manifest != null && !string.IsNullOrEmpty(config.Manifest.FilePath))
+        {
+            config.Manifest.FilePath = Path.GetFullPath(Path.Combine(configFileDirectory!, config.Manifest.FilePath));
         }
 
         return config;
@@ -269,7 +284,7 @@ public class BlazorRouteDiscoveryGenerator : IIncrementalGenerator
                     auth,
                     invokables ?? [],
                     routeParams,
-                    []) { FullTypeName = fullTypeName });
+                    []) { FullTypeName = fullTypeName, RootNamespace = rootNamespace });
 
                 if (!routeFileMap.ContainsKey(route))
                     routeFileMap[route] = new List<string>();
@@ -1182,6 +1197,66 @@ public class BlazorRouteDiscoveryGenerator : IIncrementalGenerator
             sb.AppendLine($"GET {{{{baseUrl}}}}{route.Route}");
             sb.AppendLine();
         }
+        return sb.ToString();
+    }
+
+    private static string GenerateManifest(Settings settings, List<PageRoute> routes)
+    {
+        var manifest = settings.Manifest;
+        var sb = new StringBuilder();
+
+        sb.AppendLine($"namespace {manifest.Namespace}");
+        sb.AppendLine("{");
+
+        if (manifest.OutputRouteEntry)
+        {
+            sb.AppendLine("    public readonly record struct LazyRouteEntry(string Template, string? Roles);");
+            sb.AppendLine();
+        }
+
+        sb.AppendLine($"    public static partial class {manifest.ClassName}");
+        sb.AppendLine("    {");
+        sb.AppendLine("        public static IReadOnlyDictionary<string, IReadOnlyList<LazyRouteEntry>> Routes { get; } =");
+        sb.AppendLine("            new Dictionary<string, IReadOnlyList<LazyRouteEntry>>");
+        sb.AppendLine("            {");
+
+        var grouped = routes
+            .GroupBy(r => !string.IsNullOrEmpty(manifest.AssemblyName) ? manifest.AssemblyName : r.RootNamespace)
+            .OrderBy(g => g.Key, StringComparer.Ordinal);
+
+        var firstGroup = true;
+        foreach (var group in grouped)
+        {
+            if (!firstGroup)
+                sb.AppendLine(",");
+            firstGroup = false;
+
+            sb.AppendLine($"                [\"{group.Key}\"] = new List<LazyRouteEntry>");
+            sb.AppendLine("                {");
+
+            var first = true;
+            foreach (var route in group.OrderBy(r => r.Route, StringComparer.Ordinal))
+            {
+                if (!first)
+                    sb.AppendLine(",");
+                first = false;
+
+                var roles = route.Auth?.Roles?.Count > 0
+                    ? string.Join(", ", route.Auth.Roles)
+                    : null;
+
+                var rolesLiteral = roles != null ? $"\"{EscapeStringLiteral(roles)}\"" : "null";
+                sb.Append($"                    new(\"{EscapeStringLiteral(route.Route)}\", {rolesLiteral})");
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("                }");
+        }
+
+        sb.AppendLine("            };");
+        sb.AppendLine("    }");
+        sb.AppendLine("}");
+
         return sb.ToString();
     }
 

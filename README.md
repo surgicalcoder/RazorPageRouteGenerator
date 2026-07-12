@@ -97,9 +97,9 @@ A complete rewrite that parses `.razor` files directly — no dependency on comp
 | .NET support | 6, 7, 8, 9, 10 | 10+ |
 | Razor compiler order | Fragile (must run after Razor gen) | Independent |
 | Incremental gen | Partial | Full (tracks file hashes) |
-| Features | 7 base features | 15 features (base + 8 new) |
+| Features | 7 base features | 16 features (base + 9 new) |
 
-## 15 Features
+## 16 Features
 
 | # | Feature | Config Flag | Description |
 |---|---------|-------------|-------------|
@@ -118,6 +118,7 @@ A complete rewrite that parses `.razor` files directly — no dependency on comp
 | 13 | **JSON Manifest** | `JsonRepresentation` | Export full route metadata as JSON |
 | 14 | **Auth Data + JSInvokables** | `OutputIAuthorizeData` / `Invokables.Enabled` | Auth summary comments, `IAuthorizeData` classes, JS invokable map |
 | 15 | **Exclude Support** | `ExcludePattern` + `[ExcludeFromRouteGeneration]` | Exclude files by regex pattern or opt-out attribute |
+| 16 | **Route Manifest** | `Manifest` | Generate a `LazyRouteEntry` dictionary mapping assemblies to routes with roles |
 
 ## Setup
 
@@ -149,7 +150,13 @@ Add both `RazorPageRoutes.json` and `**/*.razor` as `AdditionalFiles`:
   "EnableRouteGrouping": false,
   "GenerateValidation": true,
   "GenerateHttpFile": true,
-  "HttpFileOutput": "wwwroot/routes.http"
+  "HttpFileOutput": "wwwroot/routes.http",
+  "Manifest": {
+    "FilePath": "RouteManifest.cs",
+    "Namespace": "MyApp.Routes",
+    "ClassName": "RouteManifest",
+    "OutputRouteEntry": true
+  }
 }
 ```
 
@@ -177,6 +184,59 @@ Add both `RazorPageRoutes.json` and `**/*.razor` as `AdditionalFiles`:
 | `EnableDuplicateRouteWarning` | bool | `true` | **new** | Emit BRD003 on duplicate routes |
 | `GenerateHttpFile` | bool | `false` | **new** | Generate `.http` test file |
 | `HttpFileOutput` | string | `""` | **new** | Output path for `.http` file |
+| `Manifest` | object | `null` | **new** | Route manifest config (see below) |
+
+### Route Manifest
+
+Generates a C# file containing a dictionary mapping assembly/namespace keys to lists of `LazyRouteEntry` records (template + roles). Useful for server-side route registries or authorization lookups.
+
+```json
+{
+  "Manifest": {
+    "FilePath": "RouteManifest.cs",
+    "Namespace": "MyApp.Routes",
+    "ClassName": "RouteManifest",
+    "OutputRouteEntry": true,
+    "AssemblyName": "MyApp.Client"
+  }
+}
+```
+
+#### Manifest Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `FilePath` | string | required | Output file path (relative to project) |
+| `Namespace` | string | required | Namespace for generated code |
+| `ClassName` | string | required | Class name for the manifest |
+| `OutputRouteEntry` | bool | `false` | Include the `LazyRouteEntry` record struct definition |
+| `AssemblyName` | string | `null` | Override the dictionary key (defaults to each route's root namespace) |
+
+#### Generated Output
+
+```csharp
+namespace MyApp.Routes
+{
+    public readonly record struct LazyRouteEntry(string Template, string? Roles);
+
+    public static partial class RouteManifest
+    {
+        public static IReadOnlyDictionary<string, IReadOnlyList<LazyRouteEntry>> Routes { get; } =
+            new Dictionary<string, IReadOnlyList<LazyRouteEntry>>
+            {
+                ["MyApp.Client"] = new List<LazyRouteEntry>
+                {
+                    new("/", null),
+                    new("/admin/dashboard", "admin"),
+                    new("/counter", null),
+                    new("/secure", null)
+                }
+            };
+    }
+}
+```
+
+Routes are grouped by `AssemblyName` if provided, otherwise by each route's root namespace. Within each group, entries are sorted by URL for deterministic output.
 
 ## Generated Output Example
 

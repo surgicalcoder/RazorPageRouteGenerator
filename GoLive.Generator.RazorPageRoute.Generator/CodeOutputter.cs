@@ -230,15 +230,15 @@ public static class CodeOutputter
                     var rolesList = EvaluateCode(authSettings.RolesTransformer, authItem);
                     var authSchemesList = EvaluateCode(authSettings.AuthenticationSchemeTransformer, authItem);
 
-                    source.AppendLine($"public string Policy {{ get; set; }} = {(string.Join(",", policyList ?? []).Length == 0 ? "String.Empty" : $"\"{string.Join(", ", policyList)}\"")}; ");
-                    source.AppendLine($"public string Roles {{ get; set; }} = {(string.Join(",", rolesList ?? []).Length == 0 ? "String.Empty" : $"\"{string.Join(", ", rolesList)}\"")}; ");
-                    source.AppendLine($"public string AuthenticationSchemes {{ get; set; }} = {(string.Join(",", authSchemesList ?? []).Length == 0 ? "String.Empty" : $"\"{string.Join(", ", authSchemesList)}\"")}; ");
+                    source.AppendLine($"public string? Policy {{ get; set; }} = {(string.Join(",", policyList ?? []).Length == 0 ? "String.Empty" : $"\"{string.Join(", ", policyList)}\"")}; ");
+                    source.AppendLine($"public string? Roles {{ get; set; }} = {(string.Join(",", rolesList ?? []).Length == 0 ? "String.Empty" : $"\"{string.Join(", ", rolesList)}\"")}; ");
+                    source.AppendLine($"public string? AuthenticationSchemes {{ get; set; }} = {(string.Join(",", authSchemesList ?? []).Length == 0 ? "String.Empty" : $"\"{string.Join(", ", authSchemesList)}\"")}; ");
                 }
                 else
                 {
-                    source.AppendLine($"public string Policy {{ get; set; }} = {(string.Join(",", pageRoute.Auth.Policies ?? []).Length == 0 ? "String.Empty" : $"\"{string.Join(",", pageRoute.Auth.Policies)}\"")};");
-                    source.AppendLine($"public string Roles {{ get; set; }} = {(string.Join(",", pageRoute.Auth.Roles ?? []).Length == 0 ? "String.Empty" : $"\"{string.Join(",", pageRoute.Auth.Roles)}\"")}; ");
-                    source.AppendLine($"public string AuthenticationSchemes {{ get; set; }} = {(string.Join(",", pageRoute.Auth.AuthenticationSchemes ?? []).Length == 0 ? "String.Empty" : $"\"{string.Join(", ", pageRoute.Auth.AuthenticationSchemes)}\"")}; ");
+                    source.AppendLine($"public string? Policy {{ get; set; }} = {(string.Join(",", pageRoute.Auth.Policies ?? []).Length == 0 ? "String.Empty" : $"\"{string.Join(",", pageRoute.Auth.Policies)}\"")};");
+                    source.AppendLine($"public string? Roles {{ get; set; }} = {(string.Join(",", pageRoute.Auth.Roles ?? []).Length == 0 ? "String.Empty" : $"\"{string.Join(",", pageRoute.Auth.Roles)}\"")}; ");
+                    source.AppendLine($"public string? AuthenticationSchemes {{ get; set; }} = {(string.Join(",", pageRoute.Auth.AuthenticationSchemes ?? []).Length == 0 ? "String.Empty" : $"\"{string.Join(", ", pageRoute.Auth.AuthenticationSchemes)}\"")}; ");
                 }
 
                 source.AppendCloseCurlyBracketLine();

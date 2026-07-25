@@ -500,16 +500,16 @@ public class BlazorRouteDiscoveryGenerator : IIncrementalGenerator
                 var rolesList = EvaluateCode(authCfg.RolesTransformer, authItem);
                 var authSchemesList = EvaluateCode(authCfg.AuthenticationSchemeTransformer, authItem);
 
-                source.AppendLine($"public string Policy {{ get; set; }} = {(policyList?.Count > 0 ? $"\"{string.Join(", ", policyList.Select(QuoteLiteral))}\"" : "String.Empty")}; ");
-                source.AppendLine($"public string Roles {{ get; set; }} = {(rolesList?.Count > 0 ? $"\"{string.Join(", ", rolesList.Select(QuoteLiteral))}\"" : "String.Empty")}; ");
-                source.AppendLine($"public string AuthenticationSchemes {{ get; set; }} = {(authSchemesList?.Count > 0 ? $"\"{string.Join(", ", authSchemesList.Select(QuoteLiteral))}\"" : "String.Empty")}; ");
+                source.AppendLine($"public string? Policy {{ get; set; }} = {(policyList?.Count > 0 ? $"\"{string.Join(", ", policyList.Select(QuoteLiteral))}\"" : "String.Empty")}; ");
+                source.AppendLine($"public string? Roles {{ get; set; }} = {(rolesList?.Count > 0 ? $"\"{string.Join(", ", rolesList.Select(QuoteLiteral))}\"" : "String.Empty")}; ");
+                source.AppendLine($"public string? AuthenticationSchemes {{ get; set; }} = {(authSchemesList?.Count > 0 ? $"\"{string.Join(", ", authSchemesList.Select(QuoteLiteral))}\"" : "String.Empty")}; ");
             }
         }
         else
         {
-            source.AppendLine($"public string Policy {{ get; set; }} = {(pageRoute.Auth.Policies?.Count > 0 ? $"\"{string.Join(",", pageRoute.Auth.Policies)}\"" : "String.Empty")};");
-            source.AppendLine($"public string Roles {{ get; set; }} = {(pageRoute.Auth.Roles?.Count > 0 ? $"\"{string.Join(",", pageRoute.Auth.Roles)}\"" : "String.Empty")}; ");
-            source.AppendLine($"public string AuthenticationSchemes {{ get; set; }} = {(pageRoute.Auth.AuthenticationSchemes?.Count > 0 ? $"\"{string.Join(", ", pageRoute.Auth.AuthenticationSchemes)}\"" : "String.Empty")}; ");
+            source.AppendLine($"public string? Policy {{ get; set; }} = {(pageRoute.Auth.Policies?.Count > 0 ? $"\"{string.Join(",", pageRoute.Auth.Policies)}\"" : "String.Empty")};");
+            source.AppendLine($"public string? Roles {{ get; set; }} = {(pageRoute.Auth.Roles?.Count > 0 ? $"\"{string.Join(",", pageRoute.Auth.Roles)}\"" : "String.Empty")}; ");
+            source.AppendLine($"public string? AuthenticationSchemes {{ get; set; }} = {(pageRoute.Auth.AuthenticationSchemes?.Count > 0 ? $"\"{string.Join(", ", pageRoute.Auth.AuthenticationSchemes)}\"" : "String.Empty")}; ");
         }
 
         source.AppendCloseCurlyBracketLine();

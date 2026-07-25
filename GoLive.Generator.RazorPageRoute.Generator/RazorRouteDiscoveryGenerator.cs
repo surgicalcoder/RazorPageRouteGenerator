@@ -316,7 +316,7 @@ public class BlazorRouteDiscoveryGenerator : IIncrementalGenerator
             if (pageRoute.QueryString is { Count: > 0 })
             {
                 routeSegments.AddRange(pageRoute.QueryString
-                    .Select(prqp => $"{prqp.Type} {prqp.Name} = default"));
+                    .Select(prqp => $"{prqp.Type} {prqp.Name} = {(prqp.Type == "string" ? "\"\"" : "default")}"));
             }
 
             var parameterString = string.Join(", ", routeSegments);
@@ -383,7 +383,7 @@ public class BlazorRouteDiscoveryGenerator : IIncrementalGenerator
 
         if (pageRoute.QueryString is { Count: > 0 })
         {
-            source.AppendLine("Dictionary<string, string> queryString=new();");
+            source.AppendLine("Dictionary<string, string?> queryString=new();");
             foreach (var prqp in pageRoute.QueryString)
             {
                 if (prqp.Type == "System.String" || prqp.Type.Equals("string", StringComparison.OrdinalIgnoreCase))
@@ -457,7 +457,7 @@ public class BlazorRouteDiscoveryGenerator : IIncrementalGenerator
 
         if (pageRoute.QueryString is { Count: > 0 })
         {
-            source.AppendLine("Dictionary<string, string> queryString=new();");
+            source.AppendLine("Dictionary<string, string?> queryString=new();");
             foreach (var prqp in pageRoute.QueryString)
             {
                 if (prqp.Type == "System.String" || prqp.Type.Equals("string", StringComparison.OrdinalIgnoreCase))

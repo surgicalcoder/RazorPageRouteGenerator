@@ -87,7 +87,7 @@ public static class CodeOutputter
 
             if (pageRoute.QueryString is { Count: > 0 })
             {
-                routeSegments.AddRange(pageRoute.QueryString.Select(prqp => $"{prqp.Type} {prqp.Name} = default"));
+                routeSegments.AddRange(pageRoute.QueryString.Select(prqp => $"{prqp.Type} {prqp.Name} = {(prqp.Type == "string" ? "\"\"" : "default")}"));
             }
 
             var parameterString = string.Join(", ", routeSegments);
@@ -185,7 +185,7 @@ public static class CodeOutputter
 
         if (pageRoute.QueryString is { Count: > 0 })
         {
-            source.AppendLine("Dictionary<string, string> queryString=new();");
+            source.AppendLine("Dictionary<string, string?> queryString=new();");
 
             foreach (var pageRouteQuerystringParameter in pageRoute.QueryString)
             {
@@ -313,7 +313,7 @@ public static class CodeOutputter
 
         if (pageRoute.QueryString is { Count: > 0 })
         {
-            source.AppendLine("Dictionary<string, string> queryString=new();");
+            source.AppendLine("Dictionary<string, string?> queryString=new();");
 
             foreach (var pageRouteQuerystringParameter in pageRoute.QueryString)
             {

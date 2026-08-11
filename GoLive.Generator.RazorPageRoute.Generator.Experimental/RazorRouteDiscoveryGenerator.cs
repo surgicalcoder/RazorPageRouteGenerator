@@ -61,13 +61,19 @@ public class BlazorRouteDiscoveryGenerator : IIncrementalGenerator
                 var settings = ParseSettings(config.Path!, config.Content!, genOptions.RootNamespace);
                 if (settings == null) return default(GenerationResult?);
 
-                var cachePath = string.IsNullOrEmpty(genOptions.BaseIntermediateOutputPath)
+                var projectDir = Path.GetDirectoryName(config.Path!) ?? "";
+
+                var intermediateDir = genOptions.BaseIntermediateOutputPath;
+                if (!string.IsNullOrEmpty(intermediateDir) && !Path.IsPathRooted(intermediateDir))
+                {
+                    intermediateDir = Path.Combine(projectDir, intermediateDir);
+                }
+
+                var cachePath = string.IsNullOrEmpty(intermediateDir)
                     ? null
-                    : Path.Combine(genOptions.BaseIntermediateOutputPath, "route-cache.json");
+                    : Path.Combine(intermediateDir, "route-cache.json");
 
                 var oldMethodMap = cachePath != null ? ReadRouteCache(cachePath) : [];
-
-                var projectDir = Path.GetDirectoryName(config.Path!) ?? "";
                 var (routes, duplicates) = DiscoverRoutes(razorFiles, settings, compilation, projectDir, genOptions.RootNamespace);
 
                 var renamedRoutes = new List<(string Route, string OldMethod, string NewMethod)>();
@@ -876,7 +882,7 @@ public class BlazorRouteDiscoveryGenerator : IIncrementalGenerator
         if (pageRoute.QueryString is { Count: > 0 })
         {
             routeSegments.AddRange(pageRoute.QueryString
-                .Select(prqp => $"{prqp.Type} {prqp.Name} = default"));
+                .Select(prqp => $"{prqp.Type} {prqp.Name} = {(prqp.Type == "string" ? "\"\"" : "default")}"));
         }
 
         return string.Join(", ", routeSegments);
@@ -940,7 +946,7 @@ public class BlazorRouteDiscoveryGenerator : IIncrementalGenerator
 
         if (pageRoute.QueryString is { Count: > 0 })
         {
-            source.AppendLine("Dictionary<string, string> queryString=new();");
+            source.AppendLine("Dictionary<string, string?> queryString=new();");
             foreach (var prqp in pageRoute.QueryString)
             {
                 if (prqp.Type == "System.String" || prqp.Type.Equals("string", StringComparison.OrdinalIgnoreCase))
@@ -1037,7 +1043,7 @@ public class BlazorRouteDiscoveryGenerator : IIncrementalGenerator
 
         if (pageRoute.QueryString is { Count: > 0 })
         {
-            source.AppendLine("Dictionary<string, string> queryString=new();");
+            source.AppendLine("Dictionary<string, string?> queryString=new();");
             foreach (var prqp in pageRoute.QueryString)
             {
                 if (prqp.Type == "System.String" || prqp.Type.Equals("string", StringComparison.OrdinalIgnoreCase))
@@ -1080,16 +1086,16 @@ public class BlazorRouteDiscoveryGenerator : IIncrementalGenerator
                 var rolesList = EvaluateCode(authCfg.RolesTransformer, authItem);
                 var authSchemesList = EvaluateCode(authCfg.AuthenticationSchemeTransformer, authItem);
 
-                source.AppendLine($"public string Policy {{ get; set; }} = {(policyList?.Count > 0 ? $"\"{string.Join(", ", policyList.Select(QuoteLiteral))}\"" : "String.Empty")}; ");
-                source.AppendLine($"public string Roles {{ get; set; }} = {(rolesList?.Count > 0 ? $"\"{string.Join(", ", rolesList.Select(QuoteLiteral))}\"" : "String.Empty")}; ");
-                source.AppendLine($"public string AuthenticationSchemes {{ get; set; }} = {(authSchemesList?.Count > 0 ? $"\"{string.Join(", ", authSchemesList.Select(QuoteLiteral))}\"" : "String.Empty")}; ");
+                source.AppendLine($"public string? Policy {{ get; set; }} = {(policyList?.Count > 0 ? $"\"{string.Join(", ", policyList.Select(QuoteLiteral))}\"" : "String.Empty")}; ");
+                source.AppendLine($"public string? Roles {{ get; set; }} = {(rolesList?.Count > 0 ? $"\"{string.Join(", ", rolesList.Select(QuoteLiteral))}\"" : "String.Empty")}; ");
+                source.AppendLine($"public string? AuthenticationSchemes {{ get; set; }} = {(authSchemesList?.Count > 0 ? $"\"{string.Join(", ", authSchemesList.Select(QuoteLiteral))}\"" : "String.Empty")}; ");
             }
         }
         else
         {
-            source.AppendLine($"public string Policy {{ get; set; }} = {(pageRoute.Auth.Policies?.Count > 0 ? $"\"{string.Join(",", pageRoute.Auth.Policies)}\"" : "String.Empty")};");
-            source.AppendLine($"public string Roles {{ get; set; }} = {(pageRoute.Auth.Roles?.Count > 0 ? $"\"{string.Join(",", pageRoute.Auth.Roles)}\"" : "String.Empty")}; ");
-            source.AppendLine($"public string AuthenticationSchemes {{ get; set; }} = {(pageRoute.Auth.AuthenticationSchemes?.Count > 0 ? $"\"{string.Join(", ", pageRoute.Auth.AuthenticationSchemes)}\"" : "String.Empty")}; ");
+            source.AppendLine($"public string? Policy {{ get; set; }} = {(pageRoute.Auth.Policies?.Count > 0 ? $"\"{string.Join(",", pageRoute.Auth.Policies)}\"" : "String.Empty")};");
+            source.AppendLine($"public string? Roles {{ get; set; }} = {(pageRoute.Auth.Roles?.Count > 0 ? $"\"{string.Join(",", pageRoute.Auth.Roles)}\"" : "String.Empty")}; ");
+            source.AppendLine($"public string? AuthenticationSchemes {{ get; set; }} = {(pageRoute.Auth.AuthenticationSchemes?.Count > 0 ? $"\"{string.Join(", ", pageRoute.Auth.AuthenticationSchemes)}\"" : "String.Empty")}; ");
         }
 
         source.AppendCloseCurlyBracketLine();
